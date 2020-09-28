@@ -4,14 +4,17 @@ import nl.uu.cs.iss.ga.sim2apl.core.agent.AgentID;
 import nl.uu.cs.iss.ga.sim2apl.core.deliberation.DeliberationRunnable;
 
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 /**
  * A default time step executor that uses a ThreadPoolExecutor to run the agents when the tick needs
  * to be performed.
  */
-public class DefaultBlockingTickExecutor implements TickExecutor {
+public class DefaultBlockingTickExecutor<T> implements TickExecutor<T> {
 
     /** Internal counters **/
     private int tick = 0;
@@ -26,7 +29,7 @@ public class DefaultBlockingTickExecutor implements TickExecutor {
     private final ExecutorService executor;
 
     /** The list of agents scheduled for the next tick **/
-    private final ArrayList<DeliberationRunnable> scheduledRunnables;
+    private final ArrayList<DeliberationRunnable<T>> scheduledRunnables;
 
     /**
      * Default constructor
@@ -56,7 +59,7 @@ public class DefaultBlockingTickExecutor implements TickExecutor {
      * {@inheritDoc}
      */
     @Override
-    public boolean scheduleForNextTick(DeliberationRunnable agentDeliberationRunnable) {
+    public boolean scheduleForNextTick(DeliberationRunnable<T> agentDeliberationRunnable) {
         if (!this.scheduledRunnables.contains(agentDeliberationRunnable)) {
             this.scheduledRunnables.add(agentDeliberationRunnable);
             return true;
@@ -68,8 +71,8 @@ public class DefaultBlockingTickExecutor implements TickExecutor {
      * {@inheritDoc}
      */
     @Override
-    public HashMap<AgentID, List<String>> doTick() {
-        ArrayList<DeliberationRunnable> runnables;
+    public HashMap<AgentID, List<T>> doTick() {
+        ArrayList<DeliberationRunnable<T>> runnables;
         // TODO make sure running can only happen once with some sort of mutex? How to verify if a tick is currently being executed?
         synchronized (this.scheduledRunnables) {
             runnables = new ArrayList<>(this.scheduledRunnables);
@@ -81,25 +84,34 @@ public class DefaultBlockingTickExecutor implements TickExecutor {
             Collections.shuffle(runnables, this.random);
         }
 
-        HashMap<AgentID, List<String>> agentPlanActions = new HashMap<>();
+        HashMap<AgentID, List<T>> agentPlanActions = new HashMap<>();
 
         long startTime = System.currentTimeMillis();
-        for(DeliberationRunnable dr : runnables) {
-            try {
-                List<Object> currentAgentActions = this.executor.submit(dr).get();
-                currentAgentActions = currentAgentActions.stream().filter(Objects::nonNull).collect(Collectors.toList());
-                
-                List<String> currentAgentActionStrings = new ArrayList<>();
-                for (Object action: currentAgentActions) {
-                    currentAgentActionStrings.add((String) action);
-                }
-                
-                agentPlanActions.put(dr.getAgentID(), currentAgentActionStrings);
-                
-            } catch (InterruptedException | ExecutionException e) {
-                e.printStackTrace();
+        try {
+            List<Future<List<T>>> currentAgentFutures = this.executor.invokeAll(runnables);
+            for(int i = 0; i < currentAgentFutures.size(); i++) {
+                agentPlanActions.put(runnables.get(i).getAgentID(),
+                        currentAgentFutures.get(i).get().stream().filter(Objects::nonNull).collect(Collectors.toList())); // TODO will this work?
             }
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
         }
+//        for(DeliberationRunnable<T> dr : runnables) {
+//            try {
+//                List<T> currentAgentActions = this.executor.submit(dr).get();
+//                currentAgentActions = currentAgentActions.stream().filter(Objects::nonNull).collect(Collectors.toList());
+//
+//                List<String> currentAgentActionStrings = new ArrayList<>();
+//                for (Object action: currentAgentActions) {
+//                    currentAgentActionStrings.add((String) action);
+//                }
+//
+//                agentPlanActions.put(dr.getAgentID(), currentAgentActionStrings);
+//
+//            } catch (InterruptedException | ExecutionException e) {
+//                e.printStackTrace();
+//            }
+//        }
         this.stepDuration = (int) (System.currentTimeMillis() - startTime);
 
         tick++;

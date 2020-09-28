@@ -9,7 +9,7 @@ import nl.uu.cs.iss.ga.sim2apl.core.agent.Trigger;
  * 
  * @author Bas Testerink
  */
-public interface PlanScheme { 
+public interface PlanScheme<T> {
 	/**
 	 * Try to instantiate the plan scheme. Must return Plan.uninstantiated() if the plan scheme is not 
 	 * relevant or applicable for the given trigger and context. If the return value is
@@ -19,5 +19,5 @@ public interface PlanScheme {
 	 * @param contextInterface An interface to obtain the context of the agent.
 	 * @return Plan.uninstantiated() iff the plan scheme is not relevant and applicable, otherwise the plan to be scheduled for execution in the current deliberation cycle.
 	 */
-	Plan instantiate(final Trigger trigger, final AgentContextInterface contextInterface);
+	Plan<T> instantiate(final Trigger trigger, final AgentContextInterface<T> contextInterface);
 }

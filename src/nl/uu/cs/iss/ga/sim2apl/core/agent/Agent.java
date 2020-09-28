@@ -25,12 +25,12 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * This class complies with FIPA (Agent)
  * @author Mohammad Shafahi
  */
-public class Agent implements AgentInterface{
+public class Agent<T> implements AgentInterface{
 	
 	private Platform platform =null;
 	
 	/** Interface that exposes the relevant parts of the agent run time data for plans. */
-	private final PlanToAgentInterface planInterface;
+	private final PlanToAgentInterface<T> planInterface;
 	
 	private AgentID AID;
 
@@ -56,33 +56,33 @@ public class Agent implements AgentInterface{
 	private final List<Trigger> internalTriggers, externalTriggers;
 	
 	/** The current trigger interceptors. */
-	private List<TriggerInterceptor> internalTriggerInterceptors, externalTriggerInterceptors, messageInterceptors, goalInterceptors;
+	private List<TriggerInterceptor<T>> internalTriggerInterceptors, externalTriggerInterceptors, messageInterceptors, goalInterceptors;
 	
 	/** The agent's plan scheme base that defines its decision making. */
-	private final PlanSchemeBase planSchemeBase;
+	private final PlanSchemeBase<T> planSchemeBase;
 	
 	/** The current plans of the agent. */
-	private final List<nl.uu.cs.iss.ga.sim2apl.core.plan.Plan> plans;
+	private final List<nl.uu.cs.iss.ga.sim2apl.core.plan.Plan<T>> plans;
 	
 	/** The agent will try to execute these on shutdown/kill. */
-	private final List<nl.uu.cs.iss.ga.sim2apl.core.plan.Plan> downPlans;
+	private final List<nl.uu.cs.iss.ga.sim2apl.core.plan.Plan<T>> downPlans;
 	
 	/** The sense-reason part of the deliberation cycle of the agent. */
 	private final List<DeliberationStep> senseReasonCycle;
 
 	/** The act part of the deliberation cycle of the agent. */
-	private final List<DeliberationActionStep> actCycle;
+	private final List<DeliberationActionStep<T>> actCycle;
 	
 	/** Whether the agent is forced to stop, is finished, or is sleeping. */
 	private boolean forciblyStop, finished;
 	
 	/** Interface that exposes the context container of this agent. Is given to goals for checking whether they are achieved. */
-	private final AgentContextInterface contextInterface;
+	private final AgentContextInterface<T> contextInterface;
 	
 	/** Interface to the platform that allows the agent to reschedule its own deliberation runnable. */
 	private SelfRescheduler rescheduler = null;
 
-	public Agent(Platform p, nl.uu.cs.iss.ga.sim2apl.core.agent.AgentArguments args, AgentID agentID) {
+	public Agent(Platform p, nl.uu.cs.iss.ga.sim2apl.core.agent.AgentArguments<T> args, AgentID agentID) {
 		
 		this.AID = agentID;
 		this.contextContainer = args.createContextContainer();
@@ -98,11 +98,11 @@ public class Agent implements AgentInterface{
 		this.downPlans = new ArrayList<>();
 		this.senseReasonCycle = Collections.unmodifiableList(args.createSenseReasonCycle(this));
 		this.actCycle = Collections.unmodifiableList(args.createActCycle(this));
-		this.contextInterface = new AgentContextInterface(this);
+		this.contextInterface = new AgentContextInterface<T>(this);
 
 		this.messageQueue = new ConcurrentLinkedQueue<>();
 		this.deathListeners = new ArrayList<>();
-		this.planInterface = new PlanToAgentInterface(this);
+		this.planInterface = new PlanToAgentInterface<T>(this);
 		
 		this.plans.addAll(args.getInitialPlans());
 		this.downPlans.addAll(args.getShutdownPlans());
@@ -113,7 +113,7 @@ public class Agent implements AgentInterface{
 		p.register(this);
 	}
 
-	public Agent(Platform p, AgentArguments args) throws URISyntaxException {
+	public Agent(Platform p, AgentArguments<T> args) throws URISyntaxException {
 		this(p, args, new AgentID(UUID.randomUUID(), p.getHost(), p.getPort()));
 	}
 		
@@ -209,7 +209,7 @@ public class Agent implements AgentInterface{
 	 * goal is not relevant anymore (because it is not in the list of current goals anymore) 
 	 * then the plan will not be executed.
 	 */
-	public final Object executePlan(final nl.uu.cs.iss.ga.sim2apl.core.plan.Plan plan) throws nl.uu.cs.iss.ga.sim2apl.core.plan.PlanExecutionError {
+	public final T executePlan(final nl.uu.cs.iss.ga.sim2apl.core.plan.Plan<T> plan) throws nl.uu.cs.iss.ga.sim2apl.core.plan.PlanExecutionError {
 		if(plan.goalIsRelevant(this.planInterface))
 			return plan.execute(this.planInterface);
 
@@ -293,7 +293,7 @@ public class Agent implements AgentInterface{
 
 	/** Add a plan to the list of current plans. This plan will be executed during
 	 * the next "execute plans" deliberation step. */
-	public final void adoptPlan(final nl.uu.cs.iss.ga.sim2apl.core.plan.Plan plan){
+	public final void adoptPlan(final nl.uu.cs.iss.ga.sim2apl.core.plan.Plan<T> plan){
 		synchronized(this.plans){
 			this.plans.add(plan);
 		}
@@ -303,31 +303,31 @@ public class Agent implements AgentInterface{
 	 * the next "execute plans" deliberation step. The asynchronous version of adopt plan 
 	 * can be used to adopt a plan if the agent is possibly sleeping, as it check whether
 	 *  to reschedule the agent for execution. */
-	public final void asynchronousAdoptPlan(final nl.uu.cs.iss.ga.sim2apl.core.plan.Plan plan){
+	public final void asynchronousAdoptPlan(final nl.uu.cs.iss.ga.sim2apl.core.plan.Plan<T> plan){
 		adoptPlan(plan);
 		checkWhetherToReschedule();
 	}
 
 	/** Add an interceptor for goals. */
-	public final void adoptGoalInterceptor(final nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor interceptor){
+	public final void adoptGoalInterceptor(final nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor<T> interceptor){
 		if(interceptor.isTriggerConsuming()) this.goalInterceptors.add(interceptor);
 		else this.goalInterceptors.add(0,interceptor);
 	}
 	
 	/** Add an interceptor for external triggers. */
-	public final void adoptExternalTriggerInterceptor(final nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor interceptor){
+	public final void adoptExternalTriggerInterceptor(final nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor<T> interceptor){
 		if(interceptor.isTriggerConsuming()) this.externalTriggerInterceptors.add(interceptor);
 		else this.externalTriggerInterceptors.add(0,interceptor);
 	}
 
 	/** Add an interceptor for internal triggers. */
-	public final void adoptInternalTriggerInterceptor(final nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor interceptor){
+	public final void adoptInternalTriggerInterceptor(final nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor<T> interceptor){
 		if(interceptor.isTriggerConsuming()) this.internalTriggerInterceptors.add(interceptor);
 		else this.internalTriggerInterceptors.add(0,interceptor);
 	}
 	
 	/** Add an interceptor for messages. */
-	public final void adoptMessageInterceptor(final nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor interceptor){
+	public final void adoptMessageInterceptor(final nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor<T> interceptor){
 		if(interceptor.isTriggerConsuming()) this.messageInterceptors.add(interceptor);
 		else this.messageInterceptors.add(0,interceptor);
 	}
@@ -406,68 +406,67 @@ public class Agent implements AgentInterface{
 	}
 	
 	/** Get the plan scheme base. */
-	public nl.uu.cs.iss.ga.sim2apl.core.plan.PlanSchemeBase getPlanSchemeBase(){
+	public nl.uu.cs.iss.ga.sim2apl.core.plan.PlanSchemeBase<T> getPlanSchemeBase(){
 		return this.planSchemeBase;
 	}
-	
-	
+
 	/** Get the goal plan schemes of the plan scheme base. */
-	public final List<nl.uu.cs.iss.ga.sim2apl.core.plan.PlanScheme> getGoalPlanSchemes(){
+	public final List<nl.uu.cs.iss.ga.sim2apl.core.plan.PlanScheme<T>> getGoalPlanSchemes(){
 		return this.planSchemeBase.getGoalPlanSchemes();
 	}
 
 	/** Get the external trigger plan schemes of the plan scheme base. */
-	public final List<nl.uu.cs.iss.ga.sim2apl.core.plan.PlanScheme> getExternalTriggerPlanSchemes(){
+	public final List<nl.uu.cs.iss.ga.sim2apl.core.plan.PlanScheme<T>> getExternalTriggerPlanSchemes(){
 		return this.planSchemeBase.getExternalTriggerPlanSchemes();
 	}
 	
 	/** Get the internal trigger plan schemes of the plan scheme base. */
-	public final List<nl.uu.cs.iss.ga.sim2apl.core.plan.PlanScheme> getInternalTriggerPlanSchemes(){
+	public final List<nl.uu.cs.iss.ga.sim2apl.core.plan.PlanScheme<T>> getInternalTriggerPlanSchemes(){
 		return this.planSchemeBase.getInternalTriggerPlanSchemes();
 	}
 
 	/** Get the message plan schemes of the plan scheme base. */
-	public final List<nl.uu.cs.iss.ga.sim2apl.core.plan.PlanScheme> getMessagePlanSchemes(){
+	public final List<nl.uu.cs.iss.ga.sim2apl.core.plan.PlanScheme<T>> getMessagePlanSchemes(){
 		return this.planSchemeBase.getMessagePlanSchemes();
 	}
 
 	/** Get the goal interceptors. */
-	public final Iterator<nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor> getGoalInterceptors(){
+	public final Iterator<nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor<T>> getGoalInterceptors(){
 		return this.goalInterceptors.iterator();
 	}
 	
 	/** Get the external trigger interceptors. */
-	public final Iterator<nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor> getExternalTriggerInterceptors(){
+	public final Iterator<nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor<T>> getExternalTriggerInterceptors(){
 		return this.externalTriggerInterceptors.iterator();
 	}
 	
 	/** Get the internal trigger interceptors. */
-	public final Iterator<nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor> getInternalTriggerInterceptors(){
+	public final Iterator<nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor<T>> getInternalTriggerInterceptors(){
 		return this.internalTriggerInterceptors.iterator();
 	}
 	
 	/** Get the message interceptors. */
-	public final Iterator<nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor> getMessageInterceptors(){
+	public final Iterator<nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor<T>> getMessageInterceptors(){
 		return this.messageInterceptors.iterator();
 	}
 
 	/** Remove a goal interceptor. */
-	public final void removeGoalInterceptor(final nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor interceptor){
+	public final void removeGoalInterceptor(final nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor<T> interceptor){
 		this.goalInterceptors.remove(interceptor);
 	}
 	
 	/** Remove an external trigger interceptor. */
-	public final void removeExternalTriggerInterceptor(final nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor interceptor){
+	public final void removeExternalTriggerInterceptor(final nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor<T> interceptor){
 		this.externalTriggerInterceptors.remove(interceptor);
 	}
 	
 	/** Remove an internal trigger interceptor. */
-	public final void removeInternalTriggerInterceptor(final nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor interceptor){
+	public final void removeInternalTriggerInterceptor(final nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor<T> interceptor){
 		this.internalTriggerInterceptors.remove(interceptor);
 	}
 	
 	/** Remove a message interceptor. */
-	public final void removeMessageInterceptor(final nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor interceptor){
+	public final void removeMessageInterceptor(final nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor<T> interceptor){
 		this.messageInterceptors.remove(interceptor);
 	}
 	
@@ -479,23 +478,23 @@ public class Agent implements AgentInterface{
 	 * @param planScheme Plan scheme to try out.
 	 * @return True iff the plan scheme was instantiated. 
 	 */
-	public final boolean tryApplication(final Trigger trigger, final nl.uu.cs.iss.ga.sim2apl.core.plan.PlanScheme planScheme){
-		nl.uu.cs.iss.ga.sim2apl.core.plan.Plan result = planScheme.instantiate(trigger, this.contextInterface);
-		if(result != null && result != nl.uu.cs.iss.ga.sim2apl.core.plan.Plan.UNINSTANTIATED){
+	public final boolean tryApplication(final Trigger trigger, final nl.uu.cs.iss.ga.sim2apl.core.plan.PlanScheme<T> planScheme){
+		Plan<T> result = planScheme.instantiate(trigger, this.contextInterface);
+		if(result != null && !result.equals(Plan.UNINSTANTIATED())){
 			adoptPlan(result);
 			return true;
 		} else return false;
 	}
 
 	/** Get a new list with the current instantiated plans of the agent.	 */
-	public final List<nl.uu.cs.iss.ga.sim2apl.core.plan.Plan> getPlans(){
+	public final List<nl.uu.cs.iss.ga.sim2apl.core.plan.Plan<T>> getPlans(){
 		synchronized(this.plans){
 			if(this.plans.isEmpty()) return Collections.emptyList();
 			else return new ArrayList<>(this.plans); 
 		}
 	}
 	
-	public final List<nl.uu.cs.iss.ga.sim2apl.core.plan.Plan> getShutdownPlans(){
+	public final List<nl.uu.cs.iss.ga.sim2apl.core.plan.Plan<T>> getShutdownPlans(){
 		synchronized(this.downPlans){
 			if(this.downPlans.isEmpty()) return Collections.emptyList();
 			else return new ArrayList<>(this.downPlans); 
@@ -503,7 +502,7 @@ public class Agent implements AgentInterface{
 	}
 
 	/** Remove a plan from the list of current plans. */
-	public final void removePlan(final Plan plan){
+	public final void removePlan(final Plan<T> plan){
 		synchronized(this.plans){
 			this.plans.remove(plan);
 		}
@@ -570,7 +569,7 @@ public class Agent implements AgentInterface{
 
 	/** Obtain the act part of the deliberation cycle. THis is the only part of the cycle that is
 	 * allowed to produce actions */
-	public final List<DeliberationActionStep> getActCycle() { return this.actCycle; }
+	public final List<DeliberationActionStep<T>> getActCycle() { return this.actCycle; }
 
 	public Platform getPlatform() throws PlatformNotFoundException{
 		if(planInterface==null) {

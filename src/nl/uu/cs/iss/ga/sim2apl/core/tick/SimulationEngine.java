@@ -1,6 +1,6 @@
 package nl.uu.cs.iss.ga.sim2apl.core.tick;
 
-public interface SimulationEngine {
+public interface SimulationEngine<T> {
 
     /**
      * This method starts the simulation.
@@ -24,7 +24,7 @@ public interface SimulationEngine {
      *
      * @param processor TickHookProcessor to register
      */
-    void registerTickHookProcessor(TickHookProcessor processor);
+    void registerTickHookProcessor(TickHookProcessor<T> processor);
 
     /**
      * Deregisters a tick hook processor from being notified of pre and
@@ -32,5 +32,5 @@ public interface SimulationEngine {
      *
      * @param processor TickHookProcessor to deregister
      */
-    void deregisterTickHookProcessor(TickHookProcessor processor);
+    void deregisterTickHookProcessor(TickHookProcessor<T> processor);
 }

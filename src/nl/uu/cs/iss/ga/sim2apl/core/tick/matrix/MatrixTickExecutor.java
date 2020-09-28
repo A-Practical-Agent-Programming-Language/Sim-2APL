@@ -1,19 +1,18 @@
-package nl.uu.cs.iss.ga.sim2apl.core.tick;
+package nl.uu.cs.iss.ga.sim2apl.core.tick.matrix;
 
 import nl.uu.cs.iss.ga.sim2apl.core.agent.AgentID;
 import nl.uu.cs.iss.ga.sim2apl.core.deliberation.DeliberationRunnable;
+import nl.uu.cs.iss.ga.sim2apl.core.tick.TickExecutor;
 
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 /**
  * A default time step executor that uses a ThreadPoolExecutor to run the agents when the tick needs
  * to be performed.
  */
-public class MatrixTickExecutor implements TickExecutor {
+public class MatrixTickExecutor<T> implements TickExecutor<T> {
     private static final Logger LOG = Logger.getLogger(MatrixTickExecutor.class.getName());
     
     public final String CONTROLLER_ADDRESS = "127.0.0.1";
@@ -32,10 +31,10 @@ public class MatrixTickExecutor implements TickExecutor {
     private final ExecutorService executor;
 
     /** The list of agents scheduled for the next tick **/
-    private final ArrayList<DeliberationRunnable> scheduledRunnables;
+    private final ArrayList<DeliberationRunnable<T>> scheduledRunnables;
     
-    private final MatrixAgentThread agentThread;
-    private final MatrixStoreThread storeThread;
+    private final MatrixAgentThread<T> agentThread;
+    private final MatrixStoreThread<T> storeThread;
     private boolean finished = false;
 
     /**
@@ -46,8 +45,8 @@ public class MatrixTickExecutor implements TickExecutor {
         this.executor = Executors.newFixedThreadPool(nThreads);
         this.scheduledRunnables = new ArrayList<>();
         
-        this.agentThread = new MatrixAgentThread(0, CONTROLLER_ADDRESS, CONTROLLER_PORT, this.executor);
-        this.storeThread = new MatrixStoreThread(0, CONTROLLER_ADDRESS, CONTROLLER_PORT);
+        this.agentThread = new MatrixAgentThread<>(0, CONTROLLER_ADDRESS, CONTROLLER_PORT, this.executor);
+        this.storeThread = new MatrixStoreThread<>(0, CONTROLLER_ADDRESS, CONTROLLER_PORT);
     }
 
     /**
@@ -69,7 +68,7 @@ public class MatrixTickExecutor implements TickExecutor {
      * {@inheritDoc}
      */
     @Override
-    public boolean scheduleForNextTick(DeliberationRunnable agentDeliberationRunnable) {
+    public boolean scheduleForNextTick(DeliberationRunnable<T> agentDeliberationRunnable) {
         if (!this.scheduledRunnables.contains(agentDeliberationRunnable)) {
             this.scheduledRunnables.add(agentDeliberationRunnable);
             return true;
@@ -81,13 +80,13 @@ public class MatrixTickExecutor implements TickExecutor {
      * {@inheritDoc}
      */
     @Override
-    public HashMap<AgentID, List<String>> doTick() {
+    public HashMap<AgentID, List<T>> doTick() {
         if (finished) {
             LOG.severe("Simulation already finished");
             throw new RuntimeException("Simulation already finished");
         }
         
-        ArrayList<DeliberationRunnable> runnables;
+        ArrayList<DeliberationRunnable<T>> runnables;
         // TODO make sure running can only happen once with some sort of mutex? How to verify if a tick is currently being executed?
         synchronized (this.scheduledRunnables) {
             runnables = new ArrayList<>(this.scheduledRunnables);
@@ -106,7 +105,7 @@ public class MatrixTickExecutor implements TickExecutor {
             LOG.severe("Interrupted while sending runnables to agent thread: " + ex.toString());
             throw new RuntimeException("Interrupted while sending runnables to agent thread: " + ex.toString());
         }
-        HashMap<AgentID, List<String>> agentPlanActions = null;
+        HashMap<AgentID, List<T>> agentPlanActions = null;
         try {
             LOG.info("Waiting for ");
             agentPlanActions = this.storeThread.outq.take();

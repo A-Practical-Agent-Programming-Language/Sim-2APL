@@ -6,11 +6,11 @@ package nl.uu.cs.iss.ga.sim2apl.core.agent;
  * @author Bas Testerink
  */
 // TODO: We refactored a lot: check if this interface does anything useful.
-public final class AgentContextInterface {
+public final class AgentContextInterface<T> {
 	/** The agent that is exposed by this interface. */
-	private final nl.uu.cs.iss.ga.sim2apl.core.agent.Agent agent;
+	private final nl.uu.cs.iss.ga.sim2apl.core.agent.Agent<T> agent;
 	
-	public AgentContextInterface(final Agent agent){
+	public AgentContextInterface(final Agent<T> agent){
 		this.agent = agent;
 	}
 	

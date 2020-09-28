@@ -1,5 +1,5 @@
 // RPC Proxy class for communicating with the Matrix
-package nl.uu.cs.iss.ga.sim2apl.core.tick;
+package nl.uu.cs.iss.ga.sim2apl.core.tick.matrix;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;

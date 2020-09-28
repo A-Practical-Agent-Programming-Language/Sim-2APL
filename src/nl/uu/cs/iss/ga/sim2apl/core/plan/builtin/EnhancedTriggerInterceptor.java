@@ -25,71 +25,71 @@ import nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor;
  * @author Bas Testerink
  *
  */
-public final class EnhancedTriggerInterceptor extends nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor {
-	public final List<nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor> goalInterceptorsToRemove,
+public final class EnhancedTriggerInterceptor<T> extends nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor<T> {
+	public final List<nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor<T>> goalInterceptorsToRemove,
 	  									  externalTriggerInterceptorsToRemove,
 	  									  internalTriggerInterceptorsToRemove,
 	  									  messageInterceptorsToRemove;
 	private final Predicate<Trigger> selector;
-	private final DecoupledPlan plan;
+	private final DecoupledPlan<T> plan;
 	
-	public EnhancedTriggerInterceptor(final boolean consumesTrigger, final Predicate<Trigger> selector, DecoupledPlan plan){
+	public EnhancedTriggerInterceptor(final boolean consumesTrigger, final Predicate<Trigger> selector, DecoupledPlan<T> plan){
 		super(consumesTrigger);
 		this.selector = selector; 
 		this.plan = plan;
-		this.goalInterceptorsToRemove = new ArrayList<nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor>();
-		this.externalTriggerInterceptorsToRemove = new ArrayList<nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor>();
-		this.internalTriggerInterceptorsToRemove = new ArrayList<nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor>();
-		this.messageInterceptorsToRemove = new ArrayList<nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor>();
+		this.goalInterceptorsToRemove = new ArrayList<>();
+		this.externalTriggerInterceptorsToRemove = new ArrayList<>();
+		this.internalTriggerInterceptorsToRemove = new ArrayList<>();
+		this.messageInterceptorsToRemove = new ArrayList<>();
 	}
 	
 	@Override
-	public final nl.uu.cs.iss.ga.sim2apl.core.plan.Plan instantiate(final Trigger trigger, final AgentContextInterface contextInterface){
+	public final nl.uu.cs.iss.ga.sim2apl.core.plan.Plan<T> instantiate(final Trigger trigger, final AgentContextInterface<T> contextInterface){
 		if(this.selector.test(trigger)){
-			return new ExtendedInterceptorPlan(this.plan, trigger, 
-					this.goalInterceptorsToRemove, 
-					this.externalTriggerInterceptorsToRemove, 
-					this.internalTriggerInterceptorsToRemove, 
+			return new ExtendedInterceptorPlan<T>(this.plan, trigger,
+					this.goalInterceptorsToRemove,
+					this.externalTriggerInterceptorsToRemove,
+					this.internalTriggerInterceptorsToRemove,
 					this.messageInterceptorsToRemove);
 		}
-		return nl.uu.cs.iss.ga.sim2apl.core.plan.Plan.UNINSTANTIATED;
+		return Plan.UNINSTANTIATED();
 	}
 
 	/** If this interceptor is fired, then the provided interceptor is removed from the list of goal interceptors when this interceptor's plan is executed. */
-	public final void addGoalInterceptorToRemove(final nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor interceptor){
+	public final void addGoalInterceptorToRemove(final nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor<T> interceptor){
 		this.goalInterceptorsToRemove.add(interceptor);
 	}
 
 	/** If this interceptor is fired, then the provided interceptor is removed from the list of external trigger interceptors when this interceptor's plan is executed. */
-	public final void addExternalTriggerInterceptorToRemove(final nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor interceptor){
+	public final void addExternalTriggerInterceptorToRemove(final nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor<T> interceptor){
 		this.externalTriggerInterceptorsToRemove.add(interceptor);
 	}
 
 	/** If this interceptor is fired, then the provided interceptor is removed from the list of message interceptors when this interceptor's plan is executed. */
-	public final void addInternalTriggerInterceptorToRemove(final nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor interceptor){
+	public final void addInternalTriggerInterceptorToRemove(final nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor<T> interceptor){
 		this.internalTriggerInterceptorsToRemove.add(interceptor);
 	}
 
 	/** If this interceptor is fired, then the provided interceptor is removed from the list of internal trigger interceptors when this interceptor's plan is executed. */
-	public final void addMessageInterceptorToRemove(final nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor interceptor){
+	public final void addMessageInterceptorToRemove(final nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor<T> interceptor){
 		this.messageInterceptorsToRemove.add(interceptor);
 	}
 	
-	private final class ExtendedInterceptorPlan extends Plan {
-		public final List<nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor> goalInterceptorsToRemove,
+	private final class ExtendedInterceptorPlan<T> extends Plan<T> {
+		public final List<nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor<T>> goalInterceptorsToRemove,
 											  externalTriggerInterceptorsToRemove,
 											  internalTriggerInterceptorsToRemove,
 											  messageInterceptorsToRemove;
 		
-		private final DecoupledPlan plan;
+		private final DecoupledPlan<T> plan;
 		private final Trigger trigger;
 		private boolean firstExecute;
 		
-		public ExtendedInterceptorPlan(final DecoupledPlan plan, final Trigger trigger,
-				final List<nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor> goalInterceptorsToRemove,
-				final List<nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor> externalTriggerInterceptorsToRemove,
-				final List<nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor> internalTriggerInterceptorsToRemove,
-				final List<nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor> messageInterceptorsToRemove){
+		public ExtendedInterceptorPlan(final DecoupledPlan<T> plan, final Trigger trigger,
+				final List<nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor<T>> goalInterceptorsToRemove,
+				final List<nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor<T>> externalTriggerInterceptorsToRemove,
+				final List<nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor<T>> internalTriggerInterceptorsToRemove,
+				final List<nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor<T>> messageInterceptorsToRemove){
 			this.plan = plan;
 			this.trigger = trigger; 
 			this.goalInterceptorsToRemove = goalInterceptorsToRemove;
@@ -100,21 +100,21 @@ public final class EnhancedTriggerInterceptor extends nl.uu.cs.iss.ga.sim2apl.co
 		}
 		
 		@Override
-		public final Object execute(final PlanToAgentInterface planInterface) throws PlanExecutionError {
+		public final T execute(final PlanToAgentInterface<T> planInterface) throws PlanExecutionError {
 			// Only execute the removal of other interceptors the first time that this plan is executed
 			if(this.firstExecute){
-				for(nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor interceptor : this.goalInterceptorsToRemove)
+				for(nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor<T> interceptor : this.goalInterceptorsToRemove)
 					planInterface.removeGoalInterceptor(interceptor);
-				for(nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor interceptor : this.externalTriggerInterceptorsToRemove)
+				for(nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor<T> interceptor : this.externalTriggerInterceptorsToRemove)
 					planInterface.removeExternalTriggerInterceptor(interceptor);
-				for(nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor interceptor : this.internalTriggerInterceptorsToRemove)
+				for(nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor<T> interceptor : this.internalTriggerInterceptorsToRemove)
 					planInterface.removeInternalTriggerInterceptor(interceptor);
-				for(TriggerInterceptor interceptor : this.messageInterceptorsToRemove)
+				for(TriggerInterceptor<T> interceptor : this.messageInterceptorsToRemove)
 					planInterface.removeMessageInterceptor(interceptor);
 				this.firstExecute = false;
 			}
 			// Then proceed as if this plan is the provided plan when this interceptor was created
-			Object planAction = this.plan.execute(this.trigger, planInterface);
+			T planAction = this.plan.execute(this.trigger, planInterface);
 			setFinished(this.plan.isFinished());
 			return planAction;
 		}

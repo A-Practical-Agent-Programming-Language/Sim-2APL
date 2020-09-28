@@ -11,9 +11,9 @@ import nl.uu.cs.iss.ga.sim2apl.core.plan.PlanExecutionError;
  * 
  * @author Bas Testerink
  */
-public abstract class DecoupledPlan extends Plan {
+public abstract class DecoupledPlan<T> extends Plan<T> {
 	/** {@inheritDoc} */
 	@Override
-	public final Object execute(final PlanToAgentInterface planInterface) throws nl.uu.cs.iss.ga.sim2apl.core.plan.PlanExecutionError {return null;}
-	public abstract Object execute(final Trigger trigger, final PlanToAgentInterface planInterface) throws PlanExecutionError;
+	public final T execute(final PlanToAgentInterface<T> planInterface) throws nl.uu.cs.iss.ga.sim2apl.core.plan.PlanExecutionError {return null;}
+	public abstract T execute(final Trigger trigger, final PlanToAgentInterface<T> planInterface) throws PlanExecutionError;
 }

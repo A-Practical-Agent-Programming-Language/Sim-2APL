@@ -9,14 +9,14 @@ import nl.uu.cs.iss.ga.sim2apl.core.plan.PlanExecutionError;
  * 
  * @author Bas Testerink
  */
-public abstract class RunOncePlan extends Plan {
+public abstract class RunOncePlan<T> extends Plan<T> {
  
 	@Override
-	public final Object execute(final PlanToAgentInterface planInterface) throws nl.uu.cs.iss.ga.sim2apl.core.plan.PlanExecutionError {
-		Object planAction = executeOnce(planInterface);
+	public final T execute(final PlanToAgentInterface<T> planInterface) throws nl.uu.cs.iss.ga.sim2apl.core.plan.PlanExecutionError {
+		T planAction = executeOnce(planInterface);
 		setFinished(true);
 		return planAction;
 	}
 	
-	public abstract Object executeOnce(final PlanToAgentInterface planInterface) throws PlanExecutionError;
+	public abstract T executeOnce(final PlanToAgentInterface<T> planInterface) throws PlanExecutionError;
 }

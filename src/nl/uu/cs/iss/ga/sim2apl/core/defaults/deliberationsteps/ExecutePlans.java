@@ -14,10 +14,10 @@ import java.util.List;
  * Deliberation step for executing the current plans of the agent.
  * @author Bas Testerink
  */
-public final class ExecutePlans implements DeliberationActionStep {
-	private final nl.uu.cs.iss.ga.sim2apl.core.agent.Agent agent;
+public final class ExecutePlans<T> implements DeliberationActionStep<T> {
+	private final nl.uu.cs.iss.ga.sim2apl.core.agent.Agent<T> agent;
 
-	public  ExecutePlans(final Agent agent){
+	public ExecutePlans(final Agent<T> agent){
 		this.agent = agent;
 	}
 	
@@ -25,11 +25,11 @@ public final class ExecutePlans implements DeliberationActionStep {
 	 * after its execution, then it is removed. If an error occurs, then a plan execution error
 	 * will be inserted as an internal trigger. */
 	@Override
-	public final List<Object> execute() throws DeliberationStepException {
-		ArrayList<Object> producedActionList = new ArrayList<>();
-		for(Plan plan : this.agent.getPlans()){
+	public final List<T> execute() throws DeliberationStepException {
+		ArrayList<T> producedActionList = new ArrayList<>();
+		for(Plan<T> plan : this.agent.getPlans()){
 			try {
-				Object planAction = this.agent.executePlan(plan);
+				T planAction = this.agent.executePlan(plan);
 				if(planAction != null)
 					producedActionList.add(planAction);
 				if(plan.isFinished())

@@ -1,10 +1,13 @@
-package nl.uu.cs.iss.ga.sim2apl.core.tick;
+package nl.uu.cs.iss.ga.sim2apl.core.tick.matrix;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
+import nl.uu.cs.iss.ga.sim2apl.core.agent.AgentID;
+import org.javatuples.Pair;
+
 import java.lang.reflect.Type;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -12,21 +15,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.logging.Level;
 import java.util.logging.Logger;
-import nl.uu.cs.iss.ga.sim2apl.core.agent.AgentID;
-import org.javatuples.Pair;
 
 /**
  * The Store Thread is responsible for maintaining the overall system state.
  */
-public class MatrixStoreThread implements Runnable {
+public class MatrixStoreThread<T> implements Runnable {
     private static final Logger LOG = Logger.getLogger(MatrixStoreThread.class.getName());
 
     private int storeproc_id = -1;
     private MatrixRPCProxy proxy = null;
     
-    BlockingQueue<HashMap<AgentID, List<String>>> outq = null;
+    BlockingQueue<HashMap<AgentID, List<T>>> outq = null;
     private Thread thread = null;
      
     public MatrixStoreThread(int storeproc_id, String address, int port) {
@@ -46,7 +46,7 @@ public class MatrixStoreThread implements Runnable {
         Gson gson = new Gson();
         Type arrayListStringType = new TypeToken<ArrayList<String>>(){}.getType();
         
-        HashMap<AgentID, List<String>> agentPlanActions;
+        HashMap<AgentID, List<T>> agentPlanActions;
 
         try {
             agentPlanActions = new HashMap<>();
@@ -63,7 +63,7 @@ public class MatrixStoreThread implements Runnable {
                         } catch (URISyntaxException ex) {
                             throw new RuntimeException("Couldn't reconstruct agent id: " + ex.toString());
                         }
-                        ArrayList<String> actions = gson.fromJson(update.get("actions"), arrayListStringType);
+                        ArrayList<T> actions = gson.fromJson(update.get("actions"), arrayListStringType);
 
                         agentPlanActions.put(agentID, actions);
                     }

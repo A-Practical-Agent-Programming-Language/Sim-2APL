@@ -15,9 +15,9 @@ import java.util.List;
  * Before and after each tick, as well as at the end of the simulation, the
  * appropriate tickHooks need to be called.
  */
-public abstract class AbstractSimulationEngine implements SimulationEngine {
+public abstract class AbstractSimulationEngine<T> implements SimulationEngine<T> {
 
-    protected List<TickHookProcessor> tickHookProcessorList;
+    protected List<TickHookProcessor<T>> tickHookProcessorList;
     protected int nIterations;
     protected final Platform platform;
 
@@ -36,7 +36,7 @@ public abstract class AbstractSimulationEngine implements SimulationEngine {
      * @param platform      Platform
      * @param processors    TickHookProcessors
      */
-    public AbstractSimulationEngine(Platform platform, TickHookProcessor... processors) {
+    public AbstractSimulationEngine(Platform platform, TickHookProcessor<T>... processors) {
         this(platform);
         this.tickHookProcessorList.addAll(Arrays.asList(processors));
     }
@@ -59,7 +59,7 @@ public abstract class AbstractSimulationEngine implements SimulationEngine {
      * @param iterations    Number of ticks to run
      * @param processors    TickHookProcessors
      */
-    public AbstractSimulationEngine(Platform platform, int iterations, TickHookProcessor... processors) {
+    public AbstractSimulationEngine(Platform platform, int iterations, TickHookProcessor<T>... processors) {
         this(platform, processors);
         this.nIterations = iterations;
     }
@@ -80,7 +80,7 @@ public abstract class AbstractSimulationEngine implements SimulationEngine {
      * @param lastTickDuration  The duration of the last tick in milliseconds
      * @param actions           The hashmap of agent-actions produced during the last tick
      */
-    protected void processTickPostHook(int finishedTick, int lastTickDuration, HashMap<AgentID, List<String>> actions) {
+    protected void processTickPostHook(int finishedTick, int lastTickDuration, HashMap<AgentID, List<T>> actions) {
         this.tickHookProcessorList.forEach(tph -> tph.tickPostHook(finishedTick, lastTickDuration, actions));
     }
 
@@ -98,7 +98,7 @@ public abstract class AbstractSimulationEngine implements SimulationEngine {
      * {@inheritDoc}
      */
     @Override
-    public void registerTickHookProcessor(TickHookProcessor processor) {
+    public void registerTickHookProcessor(TickHookProcessor<T> processor) {
         if(!this.tickHookProcessorList.contains(processor)) {
             this.tickHookProcessorList.add(processor);
         }
@@ -108,7 +108,7 @@ public abstract class AbstractSimulationEngine implements SimulationEngine {
      * {@inheritDoc}
      */
     @Override
-    public void deregisterTickHookProcessor(TickHookProcessor processor) {
+    public void deregisterTickHookProcessor(TickHookProcessor<T> processor) {
         this.tickHookProcessorList.remove(processor);
     }
 }

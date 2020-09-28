@@ -10,7 +10,7 @@ import java.util.List;
  * A tick executor handles the execution of agent's sense-reason-act cycles.
  * It waits for an explicit external event before it starts execution of a tick.
  */
-public interface TickExecutor {
+public interface TickExecutor<T> {
 
     /**
      * Schedules the deliberation cycle of an agent for the next tick
@@ -20,7 +20,7 @@ public interface TickExecutor {
      * in which case this method returns false without rescheduling the
      * deliberation cycle
      */
-    boolean scheduleForNextTick(DeliberationRunnable agentDeliberationRunnable);
+    boolean scheduleForNextTick(DeliberationRunnable<T> agentDeliberationRunnable);
 
     /**
      * Performs one tick, executing the sense-reason-act cycles of all agents
@@ -31,7 +31,7 @@ public interface TickExecutor {
      * @return Hashmap of agent ID's and a list of requested actions for that
      * agent
      */
-    HashMap<AgentID, List<String>> doTick();
+    HashMap<AgentID, List<T>> doTick();
 
     /**
      * Obtain the current tick index, indicating how many ticks have already

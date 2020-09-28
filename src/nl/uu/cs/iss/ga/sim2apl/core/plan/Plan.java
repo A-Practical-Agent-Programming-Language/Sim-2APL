@@ -11,7 +11,7 @@ import nl.uu.cs.iss.ga.sim2apl.core.agent.Trigger;
  * 
  * @author Bas Testerink
  */
-public abstract class Plan {
+public abstract class Plan<T> {
 	/** Whether the plan is finished executing. */
 	private boolean finished;
 	/** Optionally the goal that will be achieved by executing this plan. */
@@ -39,7 +39,7 @@ public abstract class Plan {
 	 * @param planInterface
 	 * @return True iff there is no goal for this plan or if the agent still has the provided goal.
 	 */
-	public final boolean goalIsRelevant(final PlanToAgentInterface planInterface){
+	public final boolean goalIsRelevant(final PlanToAgentInterface<T> planInterface){
 		if(this.goal == null) return true;
 		else {
 			if(!planInterface.hasGoal(goal)){
@@ -72,10 +72,22 @@ public abstract class Plan {
 	 * @param planInterface
 	 * @throws PlanExecutionError If you throw this error than it will be automatically adopted as an internal trigger.
 	 */
-	public abstract Object execute(final PlanToAgentInterface planInterface) throws PlanExecutionError;
+	public abstract T execute(final PlanToAgentInterface<T> planInterface) throws PlanExecutionError;
 	
 
 	/** Token to indicate that an instantiate method for a plan was not fired by a trigger.*/
-	public static final Plan UNINSTANTIATED = new Plan(){ @Override
-	public final Object execute(final PlanToAgentInterface planInterface) throws PlanExecutionError {return null;}};
+//	public static Plan<?> UNINSTANTIATED = new Plan<>(){ @Override
+//		public final Object execute(final PlanToAgentInterface<Object> planInterface) throws PlanExecutionError {return null;}
+//	};
+
+	public static <T> Plan<T> UNINSTANTIATED() {
+		return new Plan<T>() {
+			@Override
+			public T execute(PlanToAgentInterface<T> planInterface) throws PlanExecutionError {
+				return null;
+			}
+		};
+	}
+
+
 }

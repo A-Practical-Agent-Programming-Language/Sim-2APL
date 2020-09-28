@@ -9,9 +9,9 @@ import java.util.List;
  * @author Bas Testerink
  *
  */
-public final class PlanSchemeBase {
+public final class PlanSchemeBase<T> {
 	/** Various lists containing the different schemes of the agent. */
-	private final List<nl.uu.cs.iss.ga.sim2apl.core.plan.PlanScheme> goalPlanSchemes,				// Equivalent of PG rules
+	private final List<nl.uu.cs.iss.ga.sim2apl.core.plan.PlanScheme<T>> goalPlanSchemes,				// Equivalent of PG rules
 								   internalTriggerPlanSchemes, 	// Equivalent of PR rules and also PC rules which have no external trigger as head
 								   externalTriggerPlanSchemes,	// Equivalent of PC rules that have an external trigger as head
 								   messagePlanSchemes;			// Equivalent of PC rules that have a message as head
@@ -25,10 +25,10 @@ public final class PlanSchemeBase {
 	 * @param externalTriggerPlanSchemes
 	 * @param messagePlanSchemes
 	 */
-	public PlanSchemeBase(final List<nl.uu.cs.iss.ga.sim2apl.core.plan.PlanScheme> goalPlanSchemes,
-						  final List<nl.uu.cs.iss.ga.sim2apl.core.plan.PlanScheme> internalTriggerPlanSchemes,
-						  final List<nl.uu.cs.iss.ga.sim2apl.core.plan.PlanScheme> externalTriggerPlanSchemes,
-						  final List<nl.uu.cs.iss.ga.sim2apl.core.plan.PlanScheme> messagePlanSchemes){
+	public PlanSchemeBase(final List<nl.uu.cs.iss.ga.sim2apl.core.plan.PlanScheme<T>> goalPlanSchemes,
+						  final List<nl.uu.cs.iss.ga.sim2apl.core.plan.PlanScheme<T>> internalTriggerPlanSchemes,
+						  final List<nl.uu.cs.iss.ga.sim2apl.core.plan.PlanScheme<T>> externalTriggerPlanSchemes,
+						  final List<nl.uu.cs.iss.ga.sim2apl.core.plan.PlanScheme<T>> messagePlanSchemes){
 		this.goalPlanSchemes = goalPlanSchemes.isEmpty()? Collections.emptyList() : Collections.unmodifiableList(goalPlanSchemes);
 		this.internalTriggerPlanSchemes = internalTriggerPlanSchemes.isEmpty() ? Collections.emptyList() : Collections.unmodifiableList(internalTriggerPlanSchemes);
 		this.externalTriggerPlanSchemes = externalTriggerPlanSchemes.isEmpty() ? Collections.emptyList() : Collections.unmodifiableList(externalTriggerPlanSchemes);
@@ -37,8 +37,8 @@ public final class PlanSchemeBase {
 
 	// Return new lists so that deliberation cannot accidentally change the plan scheme lists
 	
-	public final List<nl.uu.cs.iss.ga.sim2apl.core.plan.PlanScheme> getGoalPlanSchemes(){ return this.goalPlanSchemes; }
-	public final List<nl.uu.cs.iss.ga.sim2apl.core.plan.PlanScheme> getInternalTriggerPlanSchemes(){ return this.internalTriggerPlanSchemes; }
-	public final List<nl.uu.cs.iss.ga.sim2apl.core.plan.PlanScheme> getExternalTriggerPlanSchemes(){ return this.externalTriggerPlanSchemes; }
-	public final List<PlanScheme> getMessagePlanSchemes(){ return this.messagePlanSchemes; }
+	public final List<nl.uu.cs.iss.ga.sim2apl.core.plan.PlanScheme<T>> getGoalPlanSchemes(){ return this.goalPlanSchemes; }
+	public final List<nl.uu.cs.iss.ga.sim2apl.core.plan.PlanScheme<T>> getInternalTriggerPlanSchemes(){ return this.internalTriggerPlanSchemes; }
+	public final List<nl.uu.cs.iss.ga.sim2apl.core.plan.PlanScheme<T>> getExternalTriggerPlanSchemes(){ return this.externalTriggerPlanSchemes; }
+	public final List<PlanScheme<T>> getMessagePlanSchemes(){ return this.messagePlanSchemes; }
 } 

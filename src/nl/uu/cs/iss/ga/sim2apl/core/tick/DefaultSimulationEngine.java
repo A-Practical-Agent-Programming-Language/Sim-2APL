@@ -18,16 +18,16 @@ import java.util.List;
  * The sense-reason-act cycles are executed using an ExecutorService, since agents are allowed to run in parallel.
  * This speeds up the time it takes to perform one tick for all the agents.
  */
-public class DefaultSimulationEngine extends AbstractSimulationEngine {
+public class DefaultSimulationEngine<T> extends AbstractSimulationEngine<T> {
 
     /** The TickExecutor is obtained from the platform. By default, the DefaultTickExecutor is used, but this can
      * be overridden by specifying a custom TickExecutor at platform creation */
-    private final TickExecutor executor;
+    private final TickExecutor<T> executor;
 
     /**
      * {@inheritDoc}
      */
-    public DefaultSimulationEngine(Platform platform, int nIterations, TickHookProcessor... hookProcessors) {
+    public DefaultSimulationEngine(Platform platform, int nIterations, TickHookProcessor<T>... hookProcessors) {
         super(platform, nIterations, hookProcessors);
         this.executor = platform.getTickExecutor();
     }
@@ -43,7 +43,7 @@ public class DefaultSimulationEngine extends AbstractSimulationEngine {
     /**
      * {@inheritDoc}
      */
-    public DefaultSimulationEngine(Platform platform, TickHookProcessor... processors) {
+    public DefaultSimulationEngine(Platform platform, TickHookProcessor<T>... processors) {
         super(platform, processors);
         this.executor = platform.getTickExecutor();
     }
@@ -78,7 +78,7 @@ public class DefaultSimulationEngine extends AbstractSimulationEngine {
     private void doTick() {
         int tick = this.executor.getCurrentTick();
         this.processTickPreHooks(tick);
-        HashMap<AgentID, List<String>> agentActions = this.executor.doTick();
+        HashMap<AgentID, List<T>> agentActions = this.executor.doTick();
         this.processTickPostHook(tick, executor.getLastTickDuration(), agentActions);
     }
 }

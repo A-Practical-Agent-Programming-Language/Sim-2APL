@@ -26,7 +26,7 @@ package nl.uu.cs.iss.ga.sim2apl.core.plan;
  * 
  * @author Bas Testerink
  */
-public abstract class TriggerInterceptor implements PlanScheme {
+public abstract class TriggerInterceptor<T> implements PlanScheme<T> {
 	/** If set to true, then the trigger that triggers this interceptor should be consumed during the deliberation cycle. */
 	private final boolean consumesTrigger;
 	

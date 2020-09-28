@@ -26,7 +26,7 @@ import nl.uu.cs.iss.ga.sim2apl.core.plan.builtin.SubPlanInterface;
 import nl.uu.cs.iss.ga.sim2apl.core.platform.Platform;
 import nl.uu.cs.iss.ga.sim2apl.core.fipa.mts.Envelope;
 
-public class DirectoryFacilitator extends Agent {
+public class DirectoryFacilitator extends Agent<Void> {
 
 	private static final Loggable logger = Platform.getLogger();
 	
@@ -47,8 +47,8 @@ public class DirectoryFacilitator extends Agent {
 		public Set<String> serviceNames = new HashSet<>();
 	}
 	
-	private static AgentArguments CreateAgentArguments(Set<AgentID> others) {
-		final AgentArguments args = new AgentArguments();
+	private static AgentArguments<Void> CreateAgentArguments(Set<AgentID> others) {
+		final AgentArguments<Void> args = new AgentArguments<Void>();
 
 		args.addContext(new nl.uu.cs.iss.ga.sim2apl.core.fipa.ams.DirectoryFacilitatorContext(others));
 		args.addInitialPlan(getInitialPlan());
@@ -58,10 +58,10 @@ public class DirectoryFacilitator extends Agent {
 		return args;
 	}
 
-	private static Plan getInitialPlan() {
-		return new RunOncePlan() {
+	private static Plan<Void> getInitialPlan() {
+		return new RunOncePlan<>() {
 			@Override
-			public Object executeOnce(PlanToAgentInterface planInterface) throws PlanExecutionError {
+			public Void executeOnce(PlanToAgentInterface<Void> planInterface) throws PlanExecutionError {
 				try {
 					List<Set<AgentID>> agentsLists = new ArrayList<>();
 					agentsLists.add(planInterface.getAgent().getPlatform().getLocalAgentsSet()); // TODO: Add initial Agents to arguments (and eventually pass to Context?)
@@ -99,7 +99,7 @@ public class DirectoryFacilitator extends Agent {
 	}
 
 	private static void replySubscriber(
-		PlanToAgentInterface planInterface,
+		PlanToAgentInterface<Void> planInterface,
 		AgentID aid,
 		String conversationId,
 		Performative replyPerformative,
@@ -131,7 +131,7 @@ public class DirectoryFacilitator extends Agent {
 	}
 
 	private static void forwardToOtherDf(
-		PlanToAgentInterface planInterface,
+		PlanToAgentInterface<Void> planInterface,
 		Collection<AgentID> otherDfs,
 		String conversationId,
 		String forwardedContent) {
@@ -157,7 +157,7 @@ public class DirectoryFacilitator extends Agent {
 		});
 	}
 
-	private static nl.uu.cs.iss.ga.sim2apl.core.fipa.ams.DirectoryFacilitatorContext getDFContext(PlanToAgentInterface planInterface) {
+	private static nl.uu.cs.iss.ga.sim2apl.core.fipa.ams.DirectoryFacilitatorContext getDFContext(PlanToAgentInterface<Void> planInterface) {
 		return planInterface.getContext(nl.uu.cs.iss.ga.sim2apl.core.fipa.ams.DirectoryFacilitatorContext.class);
 	}
 
@@ -187,8 +187,8 @@ public class DirectoryFacilitator extends Agent {
 		return result;
 	}
 	
-	private static SubPlanInterface handleMessageScheme(final Trigger trigger,
-			final AgentContextInterface contextInterface) {
+	private static SubPlanInterface<Void> handleMessageScheme(final Trigger trigger,
+			final AgentContextInterface<Void> contextInterface) {
 		if (trigger instanceof ACLMessage) {
 			final ACLMessage received = (ACLMessage) trigger;
 			final Performative performative = received.getPerformative();
@@ -301,11 +301,11 @@ public class DirectoryFacilitator extends Agent {
 				};
 			}
 		} else {
-			return SubPlanInterface.UNINSTANTIATED;
+			return SubPlanInterface.UNINSTANTIATED();
 		}
 	}
 	
-	private static SubPlanInterface handleExternalScheme(final Trigger trigger, final AgentContextInterface contextInterface) {
+	private static SubPlanInterface<Void> handleExternalScheme(final Trigger trigger, final AgentContextInterface<Void> contextInterface) {
 		if (trigger instanceof ReceiveRemoteAddress) {
 			final AgentID remoteID = ((ReceiveRemoteAddress) trigger).getAgentID();
 			return (planInterface) -> {
@@ -314,7 +314,7 @@ public class DirectoryFacilitator extends Agent {
 				return null;
 			};
 		} else {
-			return SubPlanInterface.UNINSTANTIATED;
+			return SubPlanInterface.UNINSTANTIATED();
 		}
 	}
 	

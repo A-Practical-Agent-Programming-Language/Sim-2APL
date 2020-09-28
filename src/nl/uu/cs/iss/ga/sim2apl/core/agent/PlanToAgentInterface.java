@@ -19,16 +19,16 @@ import nl.uu.cs.iss.ga.sim2apl.core.plan.builtin.*;
  * 
  * @author Bas Testerink 
  */
-public final class PlanToAgentInterface {
+public final class PlanToAgentInterface<T> {
 	/** The agent that is exposed by this interface. */
-	private final nl.uu.cs.iss.ga.sim2apl.core.agent.Agent agent;
+	private final nl.uu.cs.iss.ga.sim2apl.core.agent.Agent<T> agent;
 	
-	public PlanToAgentInterface(final nl.uu.cs.iss.ga.sim2apl.core.agent.Agent agent){
+	public PlanToAgentInterface(final nl.uu.cs.iss.ga.sim2apl.core.agent.Agent<T> agent){
 		this.agent = agent;
 	}
 
 	// TODO: This is a hack, resolve this (probably by deleting or reworking the whole planinterface concept).
-	public final Agent getAgent() {
+	public final Agent<T> getAgent() {
 		return agent;
 	}
 	
@@ -50,7 +50,7 @@ public final class PlanToAgentInterface {
 	
 	/** Add a plan to the list of current plans. This plan will be executed during
 	 * the next "execute plans" deliberation step. */
-	public final void adoptPlan(final nl.uu.cs.iss.ga.sim2apl.core.plan.Plan plan){ this.agent.adoptPlan(plan); }
+	public final void adoptPlan(final nl.uu.cs.iss.ga.sim2apl.core.plan.Plan<T> plan){ this.agent.adoptPlan(plan); }
 	
 	/** Add an internal trigger to the list of current internal triggers. This trigger 
 	 * will be processed during the next deliberation cycle.*/
@@ -64,35 +64,35 @@ public final class PlanToAgentInterface {
 	public final void finished(){ this.agent.finished(); } // The agent is finished with its execution
 	
 	/** Add an interceptor for goals. */
-	public final void adoptGoalInterceptor(final nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor interceptor){
+	public final void adoptGoalInterceptor(final nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor<T> interceptor){
 		this.agent.adoptGoalInterceptor(interceptor);
 	}
 	
 	/** Add an interceptor for external triggers. */
-	public final void adoptExternalTriggerInterceptor(final nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor interceptor){
+	public final void adoptExternalTriggerInterceptor(final nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor<T> interceptor){
 		this.agent.adoptExternalTriggerInterceptor(interceptor);
 	}
 
 	/** Add an interceptor for internal triggers. */
-	public final void adoptInternalTriggerInterceptor(final nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor interceptor){
+	public final void adoptInternalTriggerInterceptor(final nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor<T> interceptor){
 		this.agent.adoptInternalTriggerInterceptor(interceptor);
 	}
 	
 	/** Add an interceptor for messages. */
-	public final void adoptMessageInterceptor(final nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor interceptor){
+	public final void adoptMessageInterceptor(final nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor<T> interceptor){
 		this.agent.adoptMessageInterceptor(interceptor);
 	}
 
-	public final void removeGoalInterceptor(final nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor interceptor){
+	public final void removeGoalInterceptor(final nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor<T> interceptor){
 		this.agent.removeGoalInterceptor(interceptor);
 	}
-	public final void removeExternalTriggerInterceptor(final nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor interceptor){
+	public final void removeExternalTriggerInterceptor(final nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor<T> interceptor){
 		this.agent.removeExternalTriggerInterceptor(interceptor);
 	}
-	public final void removeInternalTriggerInterceptor(final nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor interceptor){
+	public final void removeInternalTriggerInterceptor(final nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor<T> interceptor){
 		this.agent.removeInternalTriggerInterceptor(interceptor);
 	}
-	public final void removeMessageInterceptor(final nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor interceptor){
+	public final void removeMessageInterceptor(final nl.uu.cs.iss.ga.sim2apl.core.plan.TriggerInterceptor<T> interceptor){
 		this.agent.removeMessageInterceptor(interceptor);
 	}
 	
@@ -100,9 +100,7 @@ public final class PlanToAgentInterface {
 	public final void sendMessage(final AgentID receiver, final MessageInterface message) {
 		try {
 			this.agent.sendMessage(receiver, message);
-		} catch (MessageReceiverNotFoundException e) { 
-			e.printStackTrace();
-		}catch (PlatformNotFoundException e) {
+		} catch (MessageReceiverNotFoundException | PlatformNotFoundException e) {
 			e.printStackTrace();
 		}
 	} 

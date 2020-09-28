@@ -13,13 +13,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class AgentArguments {
+public class AgentArguments<T> {
 
-	private final List<PlanScheme> goalPlanSchemes, internalTriggerPlanSchemes, externalTriggerPlanSchemes, messagePlanSchemes;
+	private final List<PlanScheme<T>> goalPlanSchemes, internalTriggerPlanSchemes, externalTriggerPlanSchemes, messagePlanSchemes;
 	private final List<Context> contexts;
 	private final HashMap<Context, Class<? extends Context>[]> explicitKeyContexts;
-	private final List<Plan> initialPlans;
-	private final List<Plan> downPlans;
+	private final List<Plan<T>> initialPlans;
+	private final List<Plan<T>> downPlans;
 		
 	public AgentArguments(){
 		this.goalPlanSchemes = new ArrayList<>();
@@ -33,8 +33,8 @@ public class AgentArguments {
 	}
 	
 	/** Builds the plan scheme base. This is intentionally package-only so that a programmer cannot accidentally mess with the plan scheme base. */
-	final PlanSchemeBase createPlanSchemeBase(){
-		return new PlanSchemeBase(this.goalPlanSchemes, this.internalTriggerPlanSchemes, this.externalTriggerPlanSchemes, this.messagePlanSchemes);
+	final PlanSchemeBase<T> createPlanSchemeBase(){
+		return new PlanSchemeBase<T>(this.goalPlanSchemes, this.internalTriggerPlanSchemes, this.externalTriggerPlanSchemes, this.messagePlanSchemes);
 	}
 
 	/** Builds the context container. This is intentionally package-only so that a programmer cannot accidentally mess with the container. */
@@ -54,7 +54,7 @@ public class AgentArguments {
 	 * ApplyGoalPlanSchemes -> ApplyExternalTriggerPlanSchemes ->
 	 *  ApplyInternalTriggerPlanSchemes -> ApplyMessagePlanSchemes -> ExecutePlans.
 	 *  For Sim2APL, the ExecutePlans step is moved to the act Cycle*/
-	final List<DeliberationStep> createSenseReasonCycle(final Agent agent){
+	final List<DeliberationStep> createSenseReasonCycle(final Agent<T> agent){
 		// Produces the default 2APL deliberation cycle.
 		List<DeliberationStep> senseReasonCycle = new ArrayList<>();
 		senseReasonCycle.add(new ApplyGoalPlanSchemes(agent));
@@ -70,53 +70,53 @@ public class AgentArguments {
 	 * @param agent
 	 * @return
 	 */
-	final List<DeliberationActionStep> createActCycle(final Agent agent) {
-		List<DeliberationActionStep> actCycle = new ArrayList<>();
-		actCycle.add(new ExecutePlans(agent));
+	final List<DeliberationActionStep<T>> createActCycle(final Agent<T> agent) {
+		List<DeliberationActionStep<T>> actCycle = new ArrayList<>();
+		actCycle.add(new ExecutePlans<>(agent));
 		return actCycle;
 	}
 	
 	/** Returns a list of plans that will be executed upon the agent's first deliberation cycle. */
-	final List<Plan> getInitialPlans(){
+	final List<Plan<T>> getInitialPlans(){
 		return new ArrayList<>(this.initialPlans); // Ensure that no further additions will affect the the agent after creation
 	}
 	
 	/** Returns a list of plans that will be executed after the agent's last deliberation cycle. */
-	final List<Plan> getShutdownPlans(){
+	final List<Plan<T>> getShutdownPlans(){
 		return new ArrayList<>(this.downPlans); // Ensure that no further additions will affect the the agent after creation
 	} 
 	
 	// Filling the builder
 	/** Add a plan scheme that processes external triggers. */
-	public final AgentArguments addExternalTriggerPlanScheme(final PlanScheme planScheme){ this.externalTriggerPlanSchemes.add(planScheme); return this; }
+	public final AgentArguments<T> addExternalTriggerPlanScheme(final PlanScheme<T> planScheme){ this.externalTriggerPlanSchemes.add(planScheme); return this; }
 	/** Add a plan scheme that processes internal triggers. */
-	public final AgentArguments addInternalTriggerPlanScheme(final PlanScheme planScheme){ this.internalTriggerPlanSchemes.add(planScheme); return this; }
+	public final AgentArguments<T> addInternalTriggerPlanScheme(final PlanScheme<T> planScheme){ this.internalTriggerPlanSchemes.add(planScheme); return this; }
 	/** Add a plan scheme that processes messages. */
-	public final AgentArguments addMessagePlanScheme(final PlanScheme planScheme){ this.messagePlanSchemes.add(planScheme); return this; }
+	public final AgentArguments<T> addMessagePlanScheme(final PlanScheme<T> planScheme){ this.messagePlanSchemes.add(planScheme); return this; }
 	/** Add a plan scheme that try to achieve goals. */
-	public final AgentArguments addGoalPlanScheme(final PlanScheme planScheme){ this.goalPlanSchemes.add(planScheme); return this; }
+	public final AgentArguments<T> addGoalPlanScheme(final PlanScheme<T> planScheme){ this.goalPlanSchemes.add(planScheme); return this; }
 	/** Add a plan scheme that processes external triggers. */
-	public final AgentArguments addExternalTriggerPlanScheme(final FunctionalPlanSchemeInterface planScheme){ this.externalTriggerPlanSchemes.add(new FunctionalPlanScheme(planScheme)); return this; }
+	public final AgentArguments<T> addExternalTriggerPlanScheme(final FunctionalPlanSchemeInterface<T> planScheme){ this.externalTriggerPlanSchemes.add(new FunctionalPlanScheme<T>(planScheme)); return this; }
 	/** Add a plan scheme that processes internal triggers. */
-	public final AgentArguments addInternalTriggerPlanScheme(final FunctionalPlanSchemeInterface planScheme){ this.internalTriggerPlanSchemes.add(new FunctionalPlanScheme(planScheme)); return this; }
+	public final AgentArguments<T> addInternalTriggerPlanScheme(final FunctionalPlanSchemeInterface<T> planScheme){ this.internalTriggerPlanSchemes.add(new FunctionalPlanScheme<T>(planScheme)); return this; }
 	/** Add a plan scheme that processes messages. */
-	public final AgentArguments addMessagePlanScheme(final FunctionalPlanSchemeInterface planScheme){ this.messagePlanSchemes.add(new FunctionalPlanScheme(planScheme)); return this; }
+	public final AgentArguments<T> addMessagePlanScheme(final FunctionalPlanSchemeInterface<T> planScheme){ this.messagePlanSchemes.add(new FunctionalPlanScheme<T>(planScheme)); return this; }
 	/** Add a plan scheme that try to achieve goals. */
-	public final AgentArguments addGoalPlanScheme(final FunctionalPlanSchemeInterface planScheme){ this.goalPlanSchemes.add(new FunctionalPlanScheme(planScheme)); return this; }
+	public final AgentArguments<T> addGoalPlanScheme(final FunctionalPlanSchemeInterface<T> planScheme){ this.goalPlanSchemes.add(new FunctionalPlanScheme<T>(planScheme)); return this; }
 	/** Add a context that is used for decision making and plan execution. */
-	public final AgentArguments addContext(final Context context){ this.contexts.add(context); return this; }
+	public final AgentArguments<T> addContext(final Context context){ this.contexts.add(context); return this; }
 	/** Add a context that is used for decision making and plan execution with one or more explicit lookup keys. */
-	public final AgentArguments addContext(final Context context, Class<? extends Context> ... keys){ this.explicitKeyContexts.put(context, keys); return this; }
+	public final AgentArguments<T> addContext(final Context context, Class<? extends Context> ... keys){ this.explicitKeyContexts.put(context, keys); return this; }
 	/** Add a plan that will be executed in the first deliberation cycle. */
-	public final AgentArguments addInitialPlan(final Plan plan){ this.initialPlans.add(plan); return this; }
+	public final AgentArguments<T> addInitialPlan(final Plan<T> plan){ this.initialPlans.add(plan); return this; }
 	/** Add a plan that will be executed after the last deliberation cycle this agent will participate in. */
-	public final AgentArguments addShutdownPlan(final Plan plan){ this.downPlans.add(plan); return this; }
+	public final AgentArguments<T> addShutdownPlan(final Plan<T> plan){ this.downPlans.add(plan); return this; }
 	 
 	/** Copies the planschemes, contexts and initial plan of another 
 	 * builder into this builder. This can be used to for instance include a 
 	 * builder that represents a premade set of plan schemes, etc, that forms a 
 	 * coherent capability. */
-	public final AgentArguments include(final AgentArguments builder){
+	public final AgentArguments<T> include(final AgentArguments<T> builder){
 		this.externalTriggerPlanSchemes.addAll(builder.externalTriggerPlanSchemes);
 		this.internalTriggerPlanSchemes.addAll(builder.internalTriggerPlanSchemes);
 		this.messagePlanSchemes.addAll(builder.messagePlanSchemes);

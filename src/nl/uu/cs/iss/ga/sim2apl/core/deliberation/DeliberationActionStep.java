@@ -11,7 +11,7 @@ import java.util.List;
  *
  * @author Bas Testerink
  */
-public interface DeliberationActionStep {
+public interface DeliberationActionStep<T> {
 
     /** Execution of this deliberation step. It is intended that steps are
      * designed in a modular fashion. For instance the default deliberation steps
@@ -19,5 +19,5 @@ public interface DeliberationActionStep {
      * an agent component factory can decide at runtime which deliberation steps
      * should be part of an agents' deliberation cycle.
      **/
-    List<Object> execute() throws DeliberationStepException;
+    List<T> execute() throws DeliberationStepException;
 }

@@ -8,10 +8,18 @@ import nl.uu.cs.iss.ga.sim2apl.core.plan.PlanExecutionError;
  * 
  * @author Bas Testerink
  */
-public interface SubPlanInterface {
+public interface SubPlanInterface<T> {
 	/** Specification of the plan to be executed. */
-	public Object execute(final PlanToAgentInterface planInterface) throws PlanExecutionError;
+	public T execute(final PlanToAgentInterface<T> planInterface) throws PlanExecutionError;
 	/** A token that indicates that whatever scheme tries to make an interface did not fire. */ 
-	public final static SubPlanInterface UNINSTANTIATED = new SubPlanInterface(){@Override
-	public final Object execute(final PlanToAgentInterface planInterface){return null;}};
+//	public final static SubPlanInterface<? extends Object> UNINSTANTIATED = new SubPlanInterface(){@Override
+//	public final T execute(final PlanToAgentInterface<T> planInterface){return null;}};
+	public static <T> SubPlanInterface<T> UNINSTANTIATED() {
+		return new SubPlanInterface<T>() {
+			@Override
+			public T execute(PlanToAgentInterface<T> planInterface) throws PlanExecutionError {
+				return null;
+			}
+		};
+	}
 }

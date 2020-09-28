@@ -17,13 +17,13 @@ import java.util.concurrent.Callable;
  *
  * @author Bas Testerink
  */
-public final class DeliberationRunnable implements Callable<List<Object>> {
+public final class DeliberationRunnable<T> implements Callable<List<T>> {
 	/** Interface to obtain the relevant agent's data. */
-	private final nl.uu.cs.iss.ga.sim2apl.core.agent.Agent agent;
+	private final nl.uu.cs.iss.ga.sim2apl.core.agent.Agent<T> agent;
 	/** Interface to the relevant platform functionalities. */
 	private final Platform platform;
 
-	private ArrayList<Object> intendedActions;
+	private ArrayList<T> intendedActions;
 
 	/**
 	 * Creation of the deliberation runnable will also result in the setting of a self-rescheduler for this runnable  
@@ -31,7 +31,7 @@ public final class DeliberationRunnable implements Callable<List<Object>> {
 	 * @param agent
 	 * @param platform
 	 */
-	public DeliberationRunnable(final nl.uu.cs.iss.ga.sim2apl.core.agent.Agent agent, final Platform platform) {
+	public DeliberationRunnable(final nl.uu.cs.iss.ga.sim2apl.core.agent.Agent<T> agent, final Platform platform) {
 		this.agent = agent;
 		this.platform = platform;
 		this.agent.setSelfRescheduler(new SelfRescheduler(this));
@@ -46,7 +46,7 @@ public final class DeliberationRunnable implements Callable<List<Object>> {
 	 * killed and removed from the platform.
 	 */
 	@Override
-	public List<Object> call(){
+	public List<T> call(){
 		if(!this.agent.isDone()){ // Check first if agent was killed outside of this runnable
             // Clear intended actions potential previous deliberation cycle
             this.intendedActions = new ArrayList<>();
@@ -58,7 +58,7 @@ public final class DeliberationRunnable implements Callable<List<Object>> {
 					step.execute();
 				}
 
-				for(DeliberationActionStep step : this.agent.getActCycle()) {
+				for(DeliberationActionStep<T> step : this.agent.getActCycle()) {
 					this.intendedActions.addAll(step.execute());
 				}
 
@@ -97,7 +97,7 @@ public final class DeliberationRunnable implements Callable<List<Object>> {
 	}
 
 	/** Perform shutdown plans, and kill agent **/
-	private void initiateShutdown(Agent agent) {
+	private void initiateShutdown(Agent<T> agent) {
 		agent.getShutdownPlans().forEach(
 				plan -> {
 					try {

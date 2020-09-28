@@ -342,7 +342,7 @@ public final class Platform {
         return messenger;
     }
 
-    public TickExecutor getTickExecutor() {
+    public <T> TickExecutor<T> getTickExecutor() {
         return this.tickExecutor;
     }
 }
