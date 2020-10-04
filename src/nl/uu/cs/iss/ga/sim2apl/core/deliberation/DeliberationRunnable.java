@@ -1,13 +1,11 @@
 package nl.uu.cs.iss.ga.sim2apl.core.deliberation;
- 
-import nl.uu.cs.iss.ga.sim2apl.core.platform.Platform;
+
 import nl.uu.cs.iss.ga.sim2apl.core.agent.Agent;
 import nl.uu.cs.iss.ga.sim2apl.core.agent.AgentID;
 import nl.uu.cs.iss.ga.sim2apl.core.plan.PlanExecutionError;
+import nl.uu.cs.iss.ga.sim2apl.core.platform.Platform;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.Callable;
 
 /**
@@ -17,7 +15,7 @@ import java.util.concurrent.Callable;
  *
  * @author Bas Testerink
  */
-public final class DeliberationRunnable<T> implements Callable<List<T>> {
+public final class DeliberationRunnable<T> implements Callable<ReschedulableResult<T>> {
 	/** Interface to obtain the relevant agent's data. */
 	private final nl.uu.cs.iss.ga.sim2apl.core.agent.Agent<T> agent;
 	/** Interface to the relevant platform functionalities. */
@@ -34,7 +32,7 @@ public final class DeliberationRunnable<T> implements Callable<List<T>> {
 	public DeliberationRunnable(final nl.uu.cs.iss.ga.sim2apl.core.agent.Agent<T> agent, final Platform platform) {
 		this.agent = agent;
 		this.platform = platform;
-		this.agent.setSelfRescheduler(new SelfRescheduler(this));
+		this.agent.setSelfRescheduler(new SelfRescheduler<>(this));
 	}
 
 	/**
@@ -46,10 +44,11 @@ public final class DeliberationRunnable<T> implements Callable<List<T>> {
 	 * killed and removed from the platform.
 	 */
 	@Override
-	public List<T> call(){
+	public ReschedulableResult<T> call(){
 		if(!this.agent.isDone()){ // Check first if agent was killed outside of this runnable
             // Clear intended actions potential previous deliberation cycle
             this.intendedActions = new ArrayList<>();
+			boolean reschedule = false;
 
 			try {
 				// Go through the cycle and execute each step.
@@ -71,7 +70,8 @@ public final class DeliberationRunnable<T> implements Callable<List<T>> {
 					initiateShutdown(this.agent);
 				} else {
 					if (!this.agent.checkSleeping()) { // If the agents goes to sleep then it will be woken upon any external input (message, external trigger)
-						reschedule();
+//						reschedule();
+						reschedule = true;
 					} else {
 						Platform.getLogger().log(DeliberationRunnable.class, String.format("Agent %s going to sleep",
 								agent.getAID().getName()));
@@ -87,12 +87,13 @@ public final class DeliberationRunnable<T> implements Callable<List<T>> {
 			}
 
             // Produce the set of intended actions
-            return intendedActions;
+            return new ReschedulableResult<T>(this, intendedActions, reschedule);
 		} else {
 			initiateShutdown(agent);
 
 			// An agent that shuts down will no longer perform actions
-            return Collections.emptyList();
+//            return Collections.emptyList();
+			return new ReschedulableResult<>(this, intendedActions, false);
 		}
 	}
 
@@ -115,7 +116,7 @@ public final class DeliberationRunnable<T> implements Callable<List<T>> {
 	public final AgentID getAgentID(){ return this.agent.getAID(); }
 	
 	/** Reschedule this deliberation runnable so it will be executed again in the future. */
-	public final synchronized void reschedule(){
+	public final void reschedule(){
 		this.platform.scheduleForExecution(this);
-	} 
+	}
 }

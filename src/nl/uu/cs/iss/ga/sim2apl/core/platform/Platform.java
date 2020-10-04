@@ -275,9 +275,9 @@ public final class Platform {
      * @param deliberationRunnable Deliberation cycle to be executed sometime in the future.
      */
     public final void scheduleForExecution(final DeliberationRunnable deliberationRunnable) {
-        synchronized (this.tickExecutor) {
+//        synchronized (this.tickExecutor) {
             this.tickExecutor.scheduleForNextTick(deliberationRunnable);
-        }
+//        }
     }
 
     /**

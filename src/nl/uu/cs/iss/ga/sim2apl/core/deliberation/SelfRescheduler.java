@@ -5,11 +5,11 @@ package nl.uu.cs.iss.ga.sim2apl.core.deliberation;
  * 
  * @author Bas Testerink
  */
-public final class SelfRescheduler {
+public final class SelfRescheduler<T> {
 	/** The deliberation runnable that can be rescheduled. */
-	private final DeliberationRunnable deliberationRunnable;
+	private final DeliberationRunnable<T> deliberationRunnable;
 	
-	public SelfRescheduler(final DeliberationRunnable deliberationRunnable){
+	public SelfRescheduler(final DeliberationRunnable<T> deliberationRunnable){
 		this.deliberationRunnable = deliberationRunnable; 
 	}
 	

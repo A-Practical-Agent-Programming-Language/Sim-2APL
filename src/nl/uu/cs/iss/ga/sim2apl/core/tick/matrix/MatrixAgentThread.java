@@ -13,6 +13,7 @@ import java.util.concurrent.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import nl.uu.cs.iss.ga.sim2apl.core.deliberation.DeliberationRunnable;
+import nl.uu.cs.iss.ga.sim2apl.core.deliberation.ReschedulableResult;
 
 /**
  * An Agent Thread is responsible for producing events on behalf of a specific set of agents.
@@ -63,14 +64,25 @@ public class MatrixAgentThread<T> implements Runnable {
                 long startTime = System.currentTimeMillis();
                 
                 List<DeliberationRunnable<T>> runnables = inq.take();
-                List<Future<List<T>>> agentActionFutures = this.executor.invokeAll(runnables);
+                List<Future<ReschedulableResult<T>>> agentActionFutures = this.executor.invokeAll(runnables);
 
                 try {
-                    for(int i = 0; i < runnables.size(); i++) {
-                        List<String> agentActions = agentActionFutures.get(i).get().stream()
-                                .filter(Objects::nonNull).map(gson::toJson).collect(Collectors.toList());
+//                    for(int i = 0; i < runnables.size(); i++) {
+//                        List<String> agentActions = agentActionFutures.get(i).get().stream()
+//                                .filter(Objects::nonNull).map(gson::toJson).collect(Collectors.toList());
+//                        JsonObject update = new JsonObject();
+//                        update.addProperty("agentID", runnables.get(i).getAgentID().toString());
+//                        update.add("actions", gson.toJsonTree(agentActions, arrayListStringType));
+//                        JsonArray updates = new JsonArray();
+//                        updates.add(update);
+//                        this.proxy.register_events(agentproc_id, updates);
+//                    }
+                    for(Future<ReschedulableResult<T>> future : agentActionFutures) {
+                        ReschedulableResult<T> result = future.get();
+                        List<String> agentActions = result.getResult().stream().filter(Objects::nonNull)
+                                .map(gson::toJson).collect(Collectors.toList());
                         JsonObject update = new JsonObject();
-                        update.addProperty("agentID", runnables.get(i).getAgentID().toString());
+                        update.addProperty("agentID", result.getAgentID().toString());
                         update.add("actions", gson.toJsonTree(agentActions, arrayListStringType));
                         JsonArray updates = new JsonArray();
                         updates.add(update);
