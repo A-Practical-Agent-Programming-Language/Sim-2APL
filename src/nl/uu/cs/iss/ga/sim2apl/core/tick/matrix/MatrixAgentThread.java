@@ -64,25 +64,14 @@ public class MatrixAgentThread<T> implements Runnable {
                 long startTime = System.currentTimeMillis();
                 
                 List<DeliberationRunnable<T>> runnables = inq.take();
-                List<Future<ReschedulableResult<T>>> agentActionFutures = this.executor.invokeAll(runnables);
+                List<Future<List<T>>> agentActionFutures = this.executor.invokeAll(runnables);
 
                 try {
-//                    for(int i = 0; i < runnables.size(); i++) {
-//                        List<String> agentActions = agentActionFutures.get(i).get().stream()
-//                                .filter(Objects::nonNull).map(gson::toJson).collect(Collectors.toList());
-//                        JsonObject update = new JsonObject();
-//                        update.addProperty("agentID", runnables.get(i).getAgentID().toString());
-//                        update.add("actions", gson.toJsonTree(agentActions, arrayListStringType));
-//                        JsonArray updates = new JsonArray();
-//                        updates.add(update);
-//                        this.proxy.register_events(agentproc_id, updates);
-//                    }
-                    for(Future<ReschedulableResult<T>> future : agentActionFutures) {
-                        ReschedulableResult<T> result = future.get();
-                        List<String> agentActions = result.getResult().stream().filter(Objects::nonNull)
-                                .map(gson::toJson).collect(Collectors.toList());
+                    for(int i = 0; i < runnables.size(); i++) {
+                        List<String> agentActions = agentActionFutures.get(i).get().stream()
+                                .filter(Objects::nonNull).map(gson::toJson).collect(Collectors.toList());
                         JsonObject update = new JsonObject();
-                        update.addProperty("agentID", result.getAgentID().toString());
+                        update.addProperty("agentID", runnables.get(i).getAgentID().toString());
                         update.add("actions", gson.toJsonTree(agentActions, arrayListStringType));
                         JsonArray updates = new JsonArray();
                         updates.add(update);
@@ -92,28 +81,6 @@ public class MatrixAgentThread<T> implements Runnable {
                     LOG.severe("Error running runnable: " + ex.toString());
                     ex.printStackTrace();
                 }
-//                for(DeliberationRunnable<T> dr : runnables) {
-//                    try {
-//                        List<T> currentAgentActions = this.executor.submit(dr).get();
-//                        currentAgentActions = currentAgentActions.stream().filter(Objects::nonNull).collect(Collectors.toList());
-//
-//                        ArrayList<String> currentAgentActionStrings = new ArrayList<>();
-//                        for (Object action: currentAgentActions) {
-//                            currentAgentActionStrings.add((String) action);
-//                        }
-//                        String agentID = dr.getAgentID().toString();
-//
-//                        JsonObject update = new JsonObject();
-//                        update.addProperty("agentID", agentID);
-//                        update.add("actions", gson.toJsonTree(currentAgentActionStrings, arrayListStringType));
-//                        JsonArray updates = new JsonArray();
-//                        updates.add(update);
-//                        this.proxy.register_events(agentproc_id, updates);
-//                    } catch (InterruptedException | ExecutionException ex) {
-//                        LOG.severe("Error running runnable: " + ex.toString());
-//                        ex.printStackTrace();
-//                    }
-//                }
                 long stepDuration = (System.currentTimeMillis() - startTime);
                 LOG.info(String.format("Agent thread %d: Round %d: Event production took %d ms", agentproc_id, cur_round, stepDuration));
             }

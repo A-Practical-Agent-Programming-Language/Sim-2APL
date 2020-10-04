@@ -2,11 +2,9 @@ package nl.uu.cs.iss.ga.sim2apl.core.tick;
 
 import nl.uu.cs.iss.ga.sim2apl.core.agent.AgentID;
 import nl.uu.cs.iss.ga.sim2apl.core.deliberation.DeliberationRunnable;
-import nl.uu.cs.iss.ga.sim2apl.core.deliberation.ReschedulableResult;
 
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.stream.Collectors;
 
 /**
  * A default time step executor that uses a ThreadPoolExecutor to run the agents when the tick needs
@@ -53,17 +51,16 @@ public class DefaultBlockingTickExecutor<T> implements TickExecutor<T> {
         this.random = random;
     }
 
+    public <X> List<Future<X>> useExecutorForTasks(Collection<? extends Callable<X>> tasks) throws InterruptedException {
+        return this.executor.invokeAll(tasks);
+    }
+
     /**
      * {@inheritDoc}
      */
     @Override
     public boolean scheduleForNextTick(DeliberationRunnable<T> agentDeliberationRunnable) {
         this.scheduledRunnables.put(agentDeliberationRunnable.getAgentID(), agentDeliberationRunnable);
-//        if (!this.scheduledRunnables.containsKey(agentDeliberationRunnable.getAgentID())) {
-//            this.scheduledRunnables.add(agentDeliberationRunnable);
-//            return true;
-//        }
-//        return false;
         return true;
     }
 
@@ -88,17 +85,9 @@ public class DefaultBlockingTickExecutor<T> implements TickExecutor<T> {
 
         long startTime = System.currentTimeMillis();
         try {
-            List<Future<ReschedulableResult<T>>> currentAgentFutures = this.executor.invokeAll(runnables);
-//            for(int i = 0; i < currentAgentFutures.size(); i++) {
-//                agentPlanActions.put(runnables.get(i).getAgentID(),
-//                        currentAgentFutures.get(i).get().getResult().stream().filter(Objects::nonNull).collect(Collectors.toList())); // TODO will this work?
-//            }
-            for(Future<ReschedulableResult<T>> futures : currentAgentFutures) {
-                ReschedulableResult<T> result = futures.get();
-                agentPlanActions.put(result.getAgentID(), result.getResult().stream().filter(Objects::nonNull).collect(Collectors.toList()));
-                if(result.isReschedule()) {
-                    this.scheduleForNextTick(result.getDeliberationRunnable());
-                }
+            List<Future<List<T>>> currentAgentFutures = this.executor.invokeAll(runnables);
+            for(int i = 0; i < currentAgentFutures.size(); i++) {
+                agentPlanActions.put(runnables.get(i).getAgentID(), currentAgentFutures.get(i).get());
             }
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
@@ -141,12 +130,8 @@ public class DefaultBlockingTickExecutor<T> implements TickExecutor<T> {
     public List<AgentID> getScheduledAgents() {
         List<AgentID> scheduledAgents = new ArrayList<>();
         synchronized (this.scheduledRunnables) {
-//            for(DeliberationRunnable<T> runnable : this.scheduledRunnables) {
-//                scheduledAgents.add(runnable.getAgentID());
-//            }
             return new ArrayList<>(this.scheduledRunnables.keySet());
         }
-//        return scheduledAgents;
     }
 
     /**
