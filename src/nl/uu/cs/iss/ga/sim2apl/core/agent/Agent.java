@@ -18,6 +18,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.logging.Level;
 
 
 /**
@@ -230,7 +231,7 @@ public class Agent<T> implements AgentInterface{
 		if (!this.State.isActive()) {
 				this.State = FIPAAgentState.ACTIVE;
 				this.rescheduler.wakeUp();
-				Platform.getLogger().log(Agent.class, "Agent " + getAID().getName() + " woken up");
+				Platform.getLogger().log(Agent.class, Level.FINER, "Agent " + getAID().getName() + " woken up");
 		}
     }
 		

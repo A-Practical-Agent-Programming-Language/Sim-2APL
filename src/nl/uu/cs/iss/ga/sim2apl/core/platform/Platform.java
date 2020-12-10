@@ -17,6 +17,7 @@ import java.net.InetAddress;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.util.*;
+import java.util.logging.Level;
 
 /**
  * A Platform is a container that maintains the available thread pool, agent factories,
@@ -167,7 +168,7 @@ public final class Platform {
     //////////////////////////
 
     public synchronized void register(Agent agent) {
-        getLogger().log(getClass(), "Registering agent " + agent.getAID().getUuID());
+        getLogger().log(getClass(), Level.FINEST, "Registering agent " + agent.getAID().getUuID());
 
         DeliberationRunnable deliberationRunnable = new DeliberationRunnable(agent, this);
         AgentKillSwitch killSwitch = new AgentKillSwitch(agent);
@@ -185,7 +186,7 @@ public final class Platform {
     }
 
     public synchronized void deregister(Agent agent) {
-        getLogger().log(getClass(), "Deregistering agent " + agent.getAID().getUuID());
+        getLogger().log(getClass(), Level.FINEST, "Deregistering agent " + agent.getAID().getUuID());
 
         this.agentKillSwitches.remove(agent.getAID());
         this.registeredAgents.remove(agent.getAID());
@@ -195,7 +196,7 @@ public final class Platform {
     }
 
     public synchronized void modify(AgentID oldID, Agent agent) {
-        getLogger().log(getClass(), "Modifying agent " + agent.getAID().getUuID());
+        getLogger().log(getClass(), Level.FINEST, "Modifying agent " + agent.getAID().getUuID());
 
         AgentKillSwitch killSwitch = this.agentKillSwitches.remove(oldID);
         this.agentKillSwitches.put(agent.getAID(), killSwitch);

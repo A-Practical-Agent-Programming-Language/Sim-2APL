@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Callable;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 /**
@@ -75,7 +76,7 @@ public final class DeliberationRunnable<T> implements Callable<List<T>> {
 					if (!this.agent.checkSleeping()) { // If the agents goes to sleep then it will be woken upon any external input (message, external trigger)
 						reschedule();
 					} else {
-						Platform.getLogger().log(DeliberationRunnable.class, String.format("Agent %s going to sleep",
+						Platform.getLogger().log(DeliberationRunnable.class, Level.FINER, String.format("Agent %s going to sleep",
 								agent.getAID().getName()));
 					}
 				}
