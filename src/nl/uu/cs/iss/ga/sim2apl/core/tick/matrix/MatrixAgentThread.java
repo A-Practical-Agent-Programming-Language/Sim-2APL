@@ -4,6 +4,9 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
+import nl.uu.cs.iss.ga.sim2apl.core.deliberation.DeliberationResult;
+import nl.uu.cs.iss.ga.sim2apl.core.deliberation.DeliberationRunnable;
+
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,8 +15,6 @@ import java.util.Random;
 import java.util.concurrent.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import nl.uu.cs.iss.ga.sim2apl.core.deliberation.DeliberationRunnable;
-import nl.uu.cs.iss.ga.sim2apl.core.deliberation.ReschedulableResult;
 
 /**
  * An Agent Thread is responsible for producing events on behalf of a specific set of agents.
@@ -64,14 +65,14 @@ public class MatrixAgentThread<T> implements Runnable {
                 long startTime = System.currentTimeMillis();
                 
                 List<DeliberationRunnable<T>> runnables = inq.take();
-                List<Future<List<T>>> agentActionFutures = this.executor.invokeAll(runnables);
+                List<Future<DeliberationResult<T>>> agentActionFutures = this.executor.invokeAll(runnables);
 
                 try {
-                    for(int i = 0; i < runnables.size(); i++) {
-                        List<String> agentActions = agentActionFutures.get(i).get().stream()
-                                .filter(Objects::nonNull).map(gson::toJson).collect(Collectors.toList());
+                    for(Future<DeliberationResult<T>> resultFuture : agentActionFutures) {
+                        DeliberationResult<T> result = resultFuture.get();
+                        List<String> agentActions = result.getActions().stream().filter(Objects::nonNull).map(gson::toJson).collect(Collectors.toList());
                         JsonObject update = new JsonObject();
-                        update.addProperty("agentID", runnables.get(i).getAgentID().toString());
+                        update.addProperty("agentID", result.getAgentID().toString());
                         update.add("actions", gson.toJsonTree(agentActions, arrayListStringType));
                         JsonArray updates = new JsonArray();
                         updates.add(update);

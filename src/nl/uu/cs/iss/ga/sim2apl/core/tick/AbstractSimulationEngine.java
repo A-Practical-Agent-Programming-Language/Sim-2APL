@@ -1,12 +1,14 @@
 package nl.uu.cs.iss.ga.sim2apl.core.tick;
 
 import nl.uu.cs.iss.ga.sim2apl.core.agent.AgentID;
+import nl.uu.cs.iss.ga.sim2apl.core.deliberation.DeliberationResult;
 import nl.uu.cs.iss.ga.sim2apl.core.platform.Platform;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.Future;
 
 /**
  * An abstract simulation engine, that only leaves the initiation of a tick
@@ -78,9 +80,11 @@ public abstract class AbstractSimulationEngine<T> implements SimulationEngine<T>
      *
      * @param finishedTick      The tick that has finished
      * @param lastTickDuration  The duration of the last tick in milliseconds
-     * @param actions           The hashmap of agent-actions produced during the last tick
+     * @param actions           A collection of future deliberation results. All futures in this collection
+     *                          can be assumed to have finished calculation, so .get() can always be called, unless
+     *                          an execution exception occurred in the deliberation cycle of the corresponding agent.
      */
-    protected void processTickPostHook(int finishedTick, int lastTickDuration, HashMap<AgentID, List<T>> actions) {
+    protected void processTickPostHook(int finishedTick, int lastTickDuration, List<Future<DeliberationResult<T>>> actions) {
         this.tickHookProcessorList.forEach(tph -> tph.tickPostHook(finishedTick, lastTickDuration, actions));
     }
 

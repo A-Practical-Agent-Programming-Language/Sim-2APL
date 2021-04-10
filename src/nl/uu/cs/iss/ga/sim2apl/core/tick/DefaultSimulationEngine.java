@@ -1,10 +1,12 @@
 package nl.uu.cs.iss.ga.sim2apl.core.tick;
 
 import nl.uu.cs.iss.ga.sim2apl.core.agent.AgentID;
+import nl.uu.cs.iss.ga.sim2apl.core.deliberation.DeliberationResult;
 import nl.uu.cs.iss.ga.sim2apl.core.platform.Platform;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.Future;
 
 /**
  * The default simulation engine starts the simulation, and requests the tick executor to advance
@@ -78,7 +80,7 @@ public class DefaultSimulationEngine<T> extends AbstractSimulationEngine<T> {
     private void doTick() {
         int tick = this.executor.getCurrentTick();
         this.processTickPreHooks(tick);
-        HashMap<AgentID, List<T>> agentActions = this.executor.doTick();
+        List<Future<DeliberationResult<T>>> agentActions = this.executor.doTick();
         this.processTickPostHook(tick, executor.getLastTickDuration(), agentActions);
     }
 }

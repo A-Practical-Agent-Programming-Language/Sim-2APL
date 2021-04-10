@@ -1,10 +1,12 @@
 package nl.uu.cs.iss.ga.sim2apl.core.tick;
 
 import nl.uu.cs.iss.ga.sim2apl.core.agent.AgentID;
+import nl.uu.cs.iss.ga.sim2apl.core.deliberation.DeliberationResult;
 import nl.uu.cs.iss.ga.sim2apl.core.deliberation.DeliberationRunnable;
 
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 /**
  * A default time step executor that uses a ThreadPoolExecutor to run the agents when the tick needs
@@ -25,7 +27,7 @@ public class DefaultBlockingTickExecutor<T> implements TickExecutor<T> {
     private final ExecutorService executor;
 
     /** The list of agents scheduled for the next tick **/
-    private final Map<AgentID, DeliberationRunnable<T>> scheduledRunnables;
+    private Queue<DeliberationRunnable<T>> scheduledRunnables;
 
     /**
      * Default constructor
@@ -33,7 +35,7 @@ public class DefaultBlockingTickExecutor<T> implements TickExecutor<T> {
      */
     public DefaultBlockingTickExecutor(int nThreads) {
         this.executor = Executors.newFixedThreadPool(nThreads);
-        this.scheduledRunnables = new ConcurrentHashMap<>();
+        this.scheduledRunnables = new ConcurrentLinkedQueue<>();
     }
 
     /**
@@ -51,6 +53,7 @@ public class DefaultBlockingTickExecutor<T> implements TickExecutor<T> {
         this.random = random;
     }
 
+    @Override
     public <X> List<Future<X>> useExecutorForTasks(Collection<? extends Callable<X>> tasks) throws InterruptedException {
         return this.executor.invokeAll(tasks);
     }
@@ -60,7 +63,7 @@ public class DefaultBlockingTickExecutor<T> implements TickExecutor<T> {
      */
     @Override
     public boolean scheduleForNextTick(DeliberationRunnable<T> agentDeliberationRunnable) {
-        this.scheduledRunnables.put(agentDeliberationRunnable.getAgentID(), agentDeliberationRunnable);
+        this.scheduledRunnables.add(agentDeliberationRunnable);
         return true;
     }
 
@@ -68,34 +71,33 @@ public class DefaultBlockingTickExecutor<T> implements TickExecutor<T> {
      * {@inheritDoc}
      */
     @Override
-    public HashMap<AgentID, List<T>> doTick() {
-        ArrayList<DeliberationRunnable<T>> runnables;
-        // TODO make sure running can only happen once with some sort of mutex? How to verify if a tick is currently being executed?
-        synchronized (this.scheduledRunnables) {
-            runnables = new ArrayList<>(this.scheduledRunnables.values());
-            this.scheduledRunnables.clear();
-        }
+    public List<Future<DeliberationResult<T>>> doTick() {
 
-        if(this.random != null) {
-            runnables.sort(Comparator.comparing(deliberationRunnable -> deliberationRunnable.getAgentID().getUuID()));
-            Collections.shuffle(runnables, this.random);
-        }
+        Queue<DeliberationRunnable<T>> runnables = this.scheduledRunnables;
+        this.scheduledRunnables = new ConcurrentLinkedQueue<>();
 
-        HashMap<AgentID, List<T>> agentPlanActions = new HashMap<>();
+        // TODO sorting now becomes an issue. Does it make sense to sort _before_ execution? WOuld it not make more sense to sort action results, since agents are synchronous anyway?
+//        if(this.random != null) {
+//            runnables.sort(Comparator.comparing(deliberationRunnable -> deliberationRunnable.getAgentID().getUuID()));
+//            Collections.shuffle(runnables, this.random);
+//        }
+
+        List<Future<DeliberationResult<T>>> currentAgentFutures = null;
 
         long startTime = System.currentTimeMillis();
         try {
-            List<Future<List<T>>> currentAgentFutures = this.executor.invokeAll(runnables);
-            for(int i = 0; i < currentAgentFutures.size(); i++) {
-                agentPlanActions.put(runnables.get(i).getAgentID(), currentAgentFutures.get(i).get());
-            }
-        } catch (InterruptedException | ExecutionException e) {
+            currentAgentFutures = this.executor.invokeAll(runnables);
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
+//            for(Future<DeliberationResult<T>> resultFuture : currentAgentFutures) {
+//                DeliberationResult<T> result = resultFuture.get();
+//                agentPlanActions.put(result.getAgentID(), result.getActions().stream().filter(Objects::nonNull).collect(Collectors.toList()));
+//            }
         this.stepDuration = (int) (System.currentTimeMillis() - startTime);
 
         tick++;
-        return agentPlanActions;
+        return currentAgentFutures;
     }
 
     /**
@@ -128,10 +130,7 @@ public class DefaultBlockingTickExecutor<T> implements TickExecutor<T> {
      */
     @Override
     public List<AgentID> getScheduledAgents() {
-        List<AgentID> scheduledAgents = new ArrayList<>();
-        synchronized (this.scheduledRunnables) {
-            return new ArrayList<>(this.scheduledRunnables.keySet());
-        }
+        return this.scheduledRunnables.stream().map(DeliberationRunnable::getAgentID).collect(Collectors.toList());
     }
 
     /**
@@ -139,9 +138,7 @@ public class DefaultBlockingTickExecutor<T> implements TickExecutor<T> {
      */
     @Override
     public int getNofScheduledAgents() {
-        synchronized (this.scheduledRunnables) {
-            return this.scheduledRunnables.size();
-        }
+        return this.scheduledRunnables.size();
     }
 
     /**

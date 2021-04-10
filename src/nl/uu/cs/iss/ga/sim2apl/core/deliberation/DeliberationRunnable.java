@@ -7,7 +7,6 @@ import nl.uu.cs.iss.ga.sim2apl.core.platform.Platform;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.logging.Level;
@@ -20,7 +19,7 @@ import java.util.stream.Collectors;
  *
  * @author Bas Testerink
  */
-public final class DeliberationRunnable<T> implements Callable<List<T>> {
+public final class DeliberationRunnable<T> implements Callable<DeliberationResult<T>> {
 	/** Interface to obtain the relevant agent's data. */
 	private final nl.uu.cs.iss.ga.sim2apl.core.agent.Agent<T> agent;
 	/** Interface to the relevant platform functionalities. */
@@ -49,7 +48,7 @@ public final class DeliberationRunnable<T> implements Callable<List<T>> {
 	 * killed and removed from the platform.
 	 */
 	@Override
-	public List<T> call(){
+	public DeliberationResult<T> call(){
 		if(!this.agent.isDone()){ // Check first if agent was killed outside of this runnable
             // Clear intended actions potential previous deliberation cycle
             this.intendedActions = new ArrayList<>();
@@ -90,12 +89,12 @@ public final class DeliberationRunnable<T> implements Callable<List<T>> {
 			}
 
             // Produce the set of intended actions
-			return intendedActions;
+			return new DeliberationResult<>(this.agent.getAID(), intendedActions);
 		} else {
 			initiateShutdown(agent);
 
 			// An agent that shuts down will no longer perform actions
-            return Collections.emptyList();
+            return new DeliberationResult<>(this.getAgentID(), Collections.emptyList());
 		}
 	}
 

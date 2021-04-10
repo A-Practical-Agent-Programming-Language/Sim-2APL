@@ -1,6 +1,7 @@
 package nl.uu.cs.iss.ga.sim2apl.core.tick.matrix;
 
 import nl.uu.cs.iss.ga.sim2apl.core.agent.AgentID;
+import nl.uu.cs.iss.ga.sim2apl.core.deliberation.DeliberationResult;
 import nl.uu.cs.iss.ga.sim2apl.core.deliberation.DeliberationRunnable;
 import nl.uu.cs.iss.ga.sim2apl.core.tick.TickExecutor;
 
@@ -80,7 +81,7 @@ public class MatrixTickExecutor<T> implements TickExecutor<T> {
      * {@inheritDoc}
      */
     @Override
-    public HashMap<AgentID, List<T>> doTick() {
+    public List<Future<DeliberationResult<T>>> doTick() {
         if (finished) {
             LOG.severe("Simulation already finished");
             throw new RuntimeException("Simulation already finished");
@@ -118,7 +119,7 @@ public class MatrixTickExecutor<T> implements TickExecutor<T> {
         }
 
         tick++;
-        return agentPlanActions;
+        return null; // TODO can we convert this to a list of future deliberation results? Not useful for now
     }
 
     /**
@@ -168,6 +169,11 @@ public class MatrixTickExecutor<T> implements TickExecutor<T> {
         synchronized (this.scheduledRunnables) {
             return this.scheduledRunnables.size();
         }
+    }
+
+    @Override
+    public <X> List<Future<X>> useExecutorForTasks(Collection<? extends Callable<X>> tasks) throws InterruptedException {
+        throw new InterruptedException("Multithreaded execution of non-standard tasks not supported by Matrix");
     }
 
     /**

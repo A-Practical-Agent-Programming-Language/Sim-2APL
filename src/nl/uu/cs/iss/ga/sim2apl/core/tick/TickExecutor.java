@@ -1,10 +1,14 @@
 package nl.uu.cs.iss.ga.sim2apl.core.tick;
 
 import nl.uu.cs.iss.ga.sim2apl.core.agent.AgentID;
+import nl.uu.cs.iss.ga.sim2apl.core.deliberation.DeliberationResult;
 import nl.uu.cs.iss.ga.sim2apl.core.deliberation.DeliberationRunnable;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 
 /**
  * A tick executor handles the execution of agent's sense-reason-act cycles.
@@ -31,7 +35,7 @@ public interface TickExecutor<T> {
      * @return Hashmap of agent ID's and a list of requested actions for that
      * agent
      */
-    HashMap<AgentID, List<T>> doTick();
+    List<Future<DeliberationResult<T>>> doTick();
 
     /**
      * Obtain the current tick index, indicating how many ticks have already
@@ -68,6 +72,17 @@ public interface TickExecutor<T> {
      * @return Number of scheduled agents
      */
     int getNofScheduledAgents();
+
+    /**
+     * Use the multi-threaded approach used by this tick executor for agent deliberation to execute a collection of
+     * callables. Useful for extending the multi-threaded approach to scenario's outside of agent deliberation
+     *
+     * @param tasks     A collection of tasks to execute in parallel
+     * @param <X>       Generic return type of the callables in the tasks collection
+     * @return          A list of futures with the results of the executed tasks (with the order preserved)
+     * @throws InterruptedException If the tasks could not be scheduled correctly.
+     */
+    <X> List<Future<X>> useExecutorForTasks(Collection<? extends Callable<X>> tasks) throws InterruptedException;
 
     /**
      * Shuts down this executor and cleans up
