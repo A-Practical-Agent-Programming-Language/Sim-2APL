@@ -17,6 +17,9 @@ import java.net.InetAddress;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.logging.Level;
 
 /**
@@ -62,20 +65,20 @@ public final class Platform {
     /**
      * Kill switches that can force an agent to stop executing the next time it wants to deliberate.
      */
-    private final Map<AgentID, AgentKillSwitch> agentKillSwitches;
+    private final ConcurrentMap<AgentID, AgentKillSwitch> agentKillSwitches;
     /**
      * The messenger that is used for direct communication between agents.
      */
-    private final Messenger<?> messenger;
+    private final Messenger messenger;
     /**
      * The Registered Agents
      */
-    private final Map<AgentID, Agent> registeredAgents;
-    private final Map<String, AgentID> test;
+    private final ConcurrentMap<AgentID, Agent> registeredAgents;
+    private final ConcurrentMap<String, AgentID> test;
     /**
      * Local(!) DirectoryFacilitator(s)
      */
-    private final Map<AgentID, Agent> directoryFacilitators;    // TODO Don't forget to take the DFs into account when the platform is made distributed!
+    private final ConcurrentMap<AgentID, Agent> directoryFacilitators;    // TODO Don't forget to take the DFs into account when the platform is made distributed!
     /**
      * IDs of Remote DirectoryFascilitators
      */
@@ -89,14 +92,14 @@ public final class Platform {
      * @param executor  A TickExecutor service, that will perform the ticks to advance the simulation
      * @param messenger Messenger that agents will use to communicate.
      */
-    private Platform(TickExecutor executor, final Messenger<?> messenger) {
+    private Platform(TickExecutor executor, final Messenger messenger) {
         this.tickExecutor = executor;
         this.messenger = messenger;
-        this.agentKillSwitches = new HashMap<>();
-        this.registeredAgents = new HashMap<>();
-        this.directoryFacilitators = new HashMap<>();
-        this.remoteDfs = new HashSet<>();
-        this.test = new HashMap<>();
+        this.agentKillSwitches = new ConcurrentHashMap<>();
+        this.registeredAgents = new ConcurrentHashMap<>();
+        this.directoryFacilitators = new ConcurrentHashMap<>();
+        this.remoteDfs = ConcurrentHashMap.newKeySet();
+        this.test = new ConcurrentHashMap<>();
         this.remoteHosts = new ArrayList<>();
         this.remotePorts = new ArrayList<>();
     }
@@ -110,7 +113,7 @@ public final class Platform {
      * @param messenger Messenger for agent to agent communication. Will be the default messenger in case the argument is null.
      * @return An interface to control the platform.
      */
-    public final static Platform newPlatform(TickExecutor executor, final Messenger<?> messenger, String host, int port, ArrayList<String> otherHosts, ArrayList<Integer> otherPorts) {
+    public final static Platform newPlatform(TickExecutor executor, final Messenger messenger, String host, int port, ArrayList<String> otherHosts, ArrayList<Integer> otherPorts) {
         if (host == null || host == "") {
             host = GetInitialLocalHost();
         }
@@ -138,20 +141,20 @@ public final class Platform {
         return platform;
     }
 
-    public final static Platform newPlatform(final int nrOfExecutionThreads, final Messenger<?> messenger, String host, int port) {
+    public final static Platform newPlatform(final int nrOfExecutionThreads, final Messenger messenger, String host, int port) {
         TickExecutor executor = new DefaultBlockingTickExecutor(nrOfExecutionThreads);
         return newPlatform(executor, messenger, host, port, null, null);
     }
 
-    public final static Platform newPlatform(final int nrOfExecutionThreads, final Messenger<?> messenger) {
+    public final static Platform newPlatform(final int nrOfExecutionThreads, final Messenger messenger) {
         return newPlatform(nrOfExecutionThreads, messenger, GetInitialLocalHost(), defaultPort);
     }
 
-    public final static Platform newPlatform(final TickExecutor executor, final Messenger<?> messenger, String host, int port) {
+    public final static Platform newPlatform(final TickExecutor executor, final Messenger messenger, String host, int port) {
         return newPlatform(executor, messenger, host, port, null, null);
     }
 
-    public final static Platform newPlatform(final TickExecutor executor, final Messenger<?> messenger) {
+    public final static Platform newPlatform(final TickExecutor executor, final Messenger messenger) {
         return newPlatform(executor, messenger, GetInitialLocalHost(), defaultPort);
     }
 
@@ -167,7 +170,7 @@ public final class Platform {
     //// AMS FUNCTIONALITY ///
     //////////////////////////
 
-    public synchronized void register(Agent agent) {
+    public void register(Agent agent) {
         getLogger().log(getClass(), Level.FINEST, "Registering agent " + agent.getAID().getUuID());
 
         DeliberationRunnable deliberationRunnable = new DeliberationRunnable(agent, this);
@@ -185,7 +188,7 @@ public final class Platform {
         agent.invoke();
     }
 
-    public synchronized void deregister(Agent agent) {
+    public void deregister(Agent agent) {
         getLogger().log(getClass(), Level.FINEST, "Deregistering agent " + agent.getAID().getUuID());
 
         this.agentKillSwitches.remove(agent.getAID());
@@ -195,7 +198,7 @@ public final class Platform {
         this.directoryFacilitators.remove(agent.getAID()); // <- Just in case it was a DF.
     }
 
-    public synchronized void modify(AgentID oldID, Agent agent) {
+    public void modify(AgentID oldID, Agent agent) {
         getLogger().log(getClass(), Level.FINEST, "Modifying agent " + agent.getAID().getUuID());
 
         AgentKillSwitch killSwitch = this.agentKillSwitches.remove(oldID);
@@ -213,7 +216,7 @@ public final class Platform {
         this.messenger.register(agent);
     }
 
-    public synchronized void updateNickName(AgentID agentID) {
+    public void updateNickName(AgentID agentID) {
         Agent agent = registeredAgents.get(agentID);
         agent.setAID(agentID);
     }
@@ -276,9 +279,7 @@ public final class Platform {
      * @param deliberationRunnable Deliberation cycle to be executed sometime in the future.
      */
     public final void scheduleForExecution(final DeliberationRunnable deliberationRunnable) {
-//        synchronized (this.tickExecutor) {
-            this.tickExecutor.scheduleForNextTick(deliberationRunnable);
-//        }
+        this.tickExecutor.scheduleForNextTick(deliberationRunnable);
     }
 
     /**
@@ -289,15 +290,11 @@ public final class Platform {
      */
     public final void killAgent(final AgentID agentID) {
         AgentKillSwitch killSwitch;
-        synchronized (this.agentKillSwitches) {
-            killSwitch = this.agentKillSwitches.remove(agentID);
-        }
+        killSwitch = this.agentKillSwitches.remove(agentID);
         if (killSwitch != null) {// It's okay if the switch is null. In that case the agent was already killed in the past.
             killSwitch.killAgent();
         }
-        synchronized (this.registeredAgents) {
-            this.registeredAgents.remove(agentID);
-        }
+        this.registeredAgents.remove(agentID);
     }
 
     /**

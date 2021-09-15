@@ -12,12 +12,12 @@ import nl.uu.cs.iss.ga.sim2apl.core.platform.Platform;
 import java.util.HashMap;
 import java.util.Map;
 
-public class FIPAMessenger implements Messenger<ACLMessage> {
+public class FIPAMessenger<T> implements Messenger<ACLMessage, T> {
 
 	private static final Loggable logger = Platform.getLogger();
 	
 	/** Stores the interfaces to agents to inject messages. */
-	private final Map<AgentID, Agent> agents;
+	private final Map<AgentID, Agent<T>> agents;
 	
 	public FIPAMessenger() {
 		this.agents = new HashMap<>();
@@ -25,7 +25,7 @@ public class FIPAMessenger implements Messenger<ACLMessage> {
 
 	/** Store the agent interface. */
 	@Override
-	public final void register(final Agent agent) {
+	public final void register(final Agent<T> agent) {
 		synchronized (this.agents) {
 			this.agents.put(agent.getAID(), agent);
 		}

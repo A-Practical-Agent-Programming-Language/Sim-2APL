@@ -38,7 +38,7 @@ public class Agent<T> implements AgentInterface{
 	/** Listeners that are notified when this agent dies. */
 	private final List<AgentDeathListener> deathListeners;
 	
-	private Queue<MessageInterface> messageQueue;
+	private final ConcurrentLinkedQueue<MessageInterface> messageQueue;
 	
 	/** The messageHistory contains the history of messages send and received by the Agent
 	 */
@@ -57,7 +57,7 @@ public class Agent<T> implements AgentInterface{
 	private final List<Trigger> internalTriggers, externalTriggers;
 	
 	/** The current trigger interceptors. */
-	private List<TriggerInterceptor<T>> internalTriggerInterceptors, externalTriggerInterceptors, messageInterceptors, goalInterceptors;
+	private final List<TriggerInterceptor<T>> internalTriggerInterceptors, externalTriggerInterceptors, messageInterceptors, goalInterceptors;
 	
 	/** The agent's plan scheme base that defines its decision making. */
 	private final PlanSchemeBase<T> planSchemeBase;
@@ -81,7 +81,7 @@ public class Agent<T> implements AgentInterface{
 	private final AgentContextInterface<T> contextInterface;
 	
 	/** Interface to the platform that allows the agent to reschedule its own deliberation runnable. */
-	private SelfRescheduler rescheduler = null;
+	private SelfRescheduler<T> rescheduler = null;
 
 	public Agent(Platform p, nl.uu.cs.iss.ga.sim2apl.core.agent.AgentArguments<T> args, AgentID agentID) {
 		
@@ -99,11 +99,11 @@ public class Agent<T> implements AgentInterface{
 		this.downPlans = new ArrayList<>();
 		this.senseReasonCycle = Collections.unmodifiableList(args.createSenseReasonCycle(this));
 		this.actCycle = Collections.unmodifiableList(args.createActCycle(this));
-		this.contextInterface = new AgentContextInterface<T>(this);
+		this.contextInterface = new AgentContextInterface<>(this);
 
 		this.messageQueue = new ConcurrentLinkedQueue<>();
 		this.deathListeners = new ArrayList<>();
-		this.planInterface = new PlanToAgentInterface<T>(this);
+		this.planInterface = new PlanToAgentInterface<>(this);
 		
 		this.plans.addAll(args.getInitialPlans());
 		this.downPlans.addAll(args.getShutdownPlans());
@@ -141,14 +141,14 @@ public class Agent<T> implements AgentInterface{
 	//An agent receives a message using this function. 
 	//The assumption here is that if the agent is in waiting or suspended it will change states to active to receive the message
 	@Override
-	public synchronized void receiveMessage(MessageInterface message) {
+	public void receiveMessage(MessageInterface message) {
 		this.messageQueue.add(message);
 		this.messageContext.addReceivedMessage(message);
 		this.checkWhetherToReschedule();
     }
 	
 	@SuppressWarnings("unchecked")
-	public <T extends MessageInterface> MessageLog sendMessage(T message)
+	public <X extends MessageInterface> MessageLog sendMessage(X message)
 			throws MessageReceiverNotFoundException, PlatformNotFoundException {
 		message.addUserDefinedParameter("X-messageID", UUID.randomUUID().toString());
 		this.getPlatform().getMessenger().deliverMessage(message);
@@ -156,15 +156,15 @@ public class Agent<T> implements AgentInterface{
 	}
 	
 	@SuppressWarnings("unchecked")
-	public <T extends MessageInterface> MessageLog sendMessage(AgentID receiver, T message)
+	public <X extends MessageInterface> MessageLog sendMessage(AgentID receiver, X message)
 			throws MessageReceiverNotFoundException, PlatformNotFoundException {
 		message.addUserDefinedParameter("X-messageID", UUID.randomUUID().toString());
 		this.getPlatform().getMessenger().deliverMessage(receiver, message);
 		return this.messageContext.addSentMessage(message);
 	}
 	
-	public synchronized List<MessageInterface> getAllMessages() {
-		List<MessageInterface> messages=new ArrayList<>();
+	public List<MessageInterface> getAllMessages() {
+		List<MessageInterface> messages= new ArrayList<>();
 		while (!this.messageQueue.isEmpty()) {
 			messages.add(this.messageQueue.remove());
 		}
@@ -277,27 +277,27 @@ public class Agent<T> implements AgentInterface{
 	
 	/** Remove the provided goal from the list of current goals. */
 	public final void dropGoal(final Goal goal){
-	    synchronized (this.goals) {
+//	    synchronized (this.goals) {
             this.goals.remove(goal);
-        }
+//        }
 	}
 	
 	/** Add a goal to the list of current goals. Will check whether the list of 
 	 * current goals already contains the provided goal. */
 	public final void adoptGoal(final Goal goal){
-	    synchronized (this.goals) {
+//	    synchronized (this.goals) {
             if (!hasGoal(goal)) {
                 this.goals.add(goal);
             }
-        }
+//        }
 	}
 
 	/** Add a plan to the list of current plans. This plan will be executed during
 	 * the next "execute plans" deliberation step. */
 	public final void adoptPlan(final nl.uu.cs.iss.ga.sim2apl.core.plan.Plan<T> plan){
-		synchronized(this.plans){
+//		synchronized(this.plans){
 			this.plans.add(plan);
-		}
+//		}
 	}
 	
 	/** Add a plan to the list of current plans. This plan will be executed during
@@ -336,10 +336,10 @@ public class Agent<T> implements AgentInterface{
 	/** Add an internal trigger to the list of current internal triggers. This trigger 
 	 * will be processed during the next deliberation cycle.*/
 	public final void addInternalTrigger(final Trigger trigger){
-		synchronized (this.internalTriggers) {
+//		synchronized (this.internalTriggers) {
 			this.internalTriggers.add(trigger); 
 			this.checkWhetherToReschedule(); 
-		}
+//		}
 	} 
 
 	/**
@@ -386,15 +386,15 @@ public class Agent<T> implements AgentInterface{
 	/** Obtain new list that contains the current goals. Manipulating the returned list 
 	 * will not add/remove goals to the agent. The goals itself though are not cloned. */
 	public final List<Goal> getGoals(){
-		synchronized (this.goals) {
+//		synchronized (this.goals) {
 			if (this.goals.isEmpty()) return Collections.emptyList();
 			else return new ArrayList<>(this.goals);
-		}
+//		}
 	}
 	
 	/** Remove all goals that are achieved given the contexts of the agent. */
 	public final void clearAchievedGoals(){
-		synchronized (this.goals) {
+//		synchronized (this.goals) {
 			if (!this.goals.isEmpty()) {
 				List<Goal> snapshot = new ArrayList<>(this.goals);
 				for (Goal goal : snapshot) {
@@ -403,7 +403,7 @@ public class Agent<T> implements AgentInterface{
 					}
 				}
 			}
-		}
+//		}
 	}
 	
 	/** Get the plan scheme base. */
@@ -489,24 +489,24 @@ public class Agent<T> implements AgentInterface{
 
 	/** Get a new list with the current instantiated plans of the agent.	 */
 	public final List<nl.uu.cs.iss.ga.sim2apl.core.plan.Plan<T>> getPlans(){
-		synchronized(this.plans){
+//		synchronized(this.plans){
 			if(this.plans.isEmpty()) return Collections.emptyList();
 			else return new ArrayList<>(this.plans); 
-		}
+//		}
 	}
 	
 	public final List<nl.uu.cs.iss.ga.sim2apl.core.plan.Plan<T>> getShutdownPlans(){
-		synchronized(this.downPlans){
+//		synchronized(this.downPlans){
 			if(this.downPlans.isEmpty()) return Collections.emptyList();
 			else return new ArrayList<>(this.downPlans); 
-		}
+//		}
 	}
 
 	/** Remove a plan from the list of current plans. */
 	public final void removePlan(final Plan<T> plan){
-		synchronized(this.plans){
+//		synchronized(this.plans){
 			this.plans.remove(plan);
-		}
+//		}
 	}
 
 	///////////////////////////////////
@@ -530,7 +530,7 @@ public class Agent<T> implements AgentInterface{
 		return this.forciblyStop || this.finished;
 	}
 	
-	public final void setSelfRescheduler(final SelfRescheduler rescheduler){
+	public final void setSelfRescheduler(final SelfRescheduler<T> rescheduler){
 		this.rescheduler = rescheduler;
 	}
 	
@@ -542,10 +542,10 @@ public class Agent<T> implements AgentInterface{
 	 * 
 	 */
 	public final boolean checkSleeping(){
-		synchronized (this.externalTriggers) {
-			synchronized(this.internalTriggers){
-				synchronized (this.goals) {
-					synchronized (this.plans) {
+//		synchronized (this.externalTriggers) {
+//			synchronized(this.internalTriggers){
+//				synchronized (this.goals) {
+//					synchronized (this.plans) {
 						if (!this.State.isActive()) return true;
 						else if (this.plans.size() == 0 &&
 								this.externalTriggers.size() == 0 &&
@@ -556,10 +556,10 @@ public class Agent<T> implements AgentInterface{
 							this.State = FIPAAgentState.WAITING;
 						}
 						return !this.State.isActive();
-					}
-				}
-			}
-		}
+//					}
+//				}
+//			}
+//		}
 	}
 	 
 	

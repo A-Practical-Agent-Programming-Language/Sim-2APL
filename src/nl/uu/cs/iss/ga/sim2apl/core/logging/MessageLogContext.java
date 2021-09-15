@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.SubmissionPublisher;
 
@@ -15,13 +16,13 @@ public class MessageLogContext extends SubmissionPublisher<MessageLog> implement
 
 	/** The sendMessageHistory contains the history of messages sent by the Agent */
 	private final SortedSet<MessageLog> sendMessageHistory = new ConcurrentSkipListSet<>();
-	private final Map<UUID, MessageLog> sendMessageMap = new HashMap<>();
+	private final Map<UUID, MessageLog> sendMessageMap = new ConcurrentHashMap<>();
 
 	/**
 	 * The sendMessageHistory contains the history of messages received by the Agent
 	 */
 	private final SortedSet<MessageLog> receiveMessageHistory = new ConcurrentSkipListSet<>();
-	private final Map<UUID, MessageLog> receiveMessageMap = new HashMap<>();
+	private final Map<UUID, MessageLog> receiveMessageMap = new ConcurrentHashMap<>();
 
 	public MessageLog addSentMessage(MessageInterface message) {
 		final MessageLog log = new MessageLog(message, false);

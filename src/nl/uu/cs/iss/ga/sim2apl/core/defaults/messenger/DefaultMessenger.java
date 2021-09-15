@@ -1,12 +1,11 @@
 package nl.uu.cs.iss.ga.sim2apl.core.defaults.messenger;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import nl.uu.cs.iss.ga.sim2apl.core.fipa.MessageInterface;
-import nl.uu.cs.iss.ga.sim2apl.core.messaging.Messenger;
 import nl.uu.cs.iss.ga.sim2apl.core.agent.Agent;
 import nl.uu.cs.iss.ga.sim2apl.core.agent.AgentID;
+import nl.uu.cs.iss.ga.sim2apl.core.fipa.MessageInterface;
+import nl.uu.cs.iss.ga.sim2apl.core.messaging.Messenger;
+
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * The default messenger is a very simple implementation for communication between 
@@ -14,41 +13,35 @@ import nl.uu.cs.iss.ga.sim2apl.core.agent.AgentID;
  * 
  * @author Bas Testerink
  */
-public final class DefaultMessenger implements Messenger<MessageInterface> { 
+public final class DefaultMessenger<T> implements Messenger<MessageInterface, T> {
 	/** Stores the interfaces to agents to inject messages. */
-	private final Map<nl.uu.cs.iss.ga.sim2apl.core.agent.AgentID, nl.uu.cs.iss.ga.sim2apl.core.agent.Agent> agents;
+	private final ConcurrentHashMap<AgentID, Agent<T>> agents;
 
 	public DefaultMessenger(){
-		this.agents = new HashMap<nl.uu.cs.iss.ga.sim2apl.core.agent.AgentID, nl.uu.cs.iss.ga.sim2apl.core.agent.Agent>();
+		this.agents = new ConcurrentHashMap<>();
 	} 
 
 	/** Store the agent interface. */
 	@Override
-	public final void register(nl.uu.cs.iss.ga.sim2apl.core.agent.Agent agent){
-		synchronized(this.agents){ 
-			this.agents.put(agent.getAID(), agent);
-		}
+	public final void register(Agent<T> agent){
+		this.agents.put(agent.getAID(), agent);
 	}
 
 	/** Remove the agent interface from the messenger. */
 	@Override
-	public final void deregister(final nl.uu.cs.iss.ga.sim2apl.core.agent.AgentID agentID){
-		synchronized(this.agents){ 
-			this.agents.remove(agentID); 
-		}
-	} 
+	public final void deregister(final AgentID agentID){
+		this.agents.remove(agentID);
+	}
 	
 	/** Grab the agent interface of the receiver and add the message in the receiving agent. */
 	public final void sendMessage(final nl.uu.cs.iss.ga.sim2apl.core.agent.AgentID receiver, final MessageInterface message) throws nl.uu.cs.iss.ga.sim2apl.core.defaults.messenger.MessageReceiverNotFoundException {
-		synchronized(this.agents){
-			Agent agent = this.agents.get(receiver);
-			if(agent == null){
-				//TODO send message to sender that receiver is unknown instead of exception
-				throw new nl.uu.cs.iss.ga.sim2apl.core.defaults.messenger.MessageReceiverNotFoundException("Trying to send to non-existent agent "+receiver+".");
-			} else {
-				agent.receiveMessage(message);
-			}
-		} 
+		Agent<T> agent = this.agents.get(receiver);
+		if(agent == null){
+			//TODO send message to sender that receiver is unknown instead of exception
+			throw new MessageReceiverNotFoundException("Trying to send to non-existent agent "+receiver+".");
+		} else {
+			agent.receiveMessage(message);
+		}
 	}
 
 	@Override

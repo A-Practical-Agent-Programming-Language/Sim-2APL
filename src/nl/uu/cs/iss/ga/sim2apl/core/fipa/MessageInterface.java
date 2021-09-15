@@ -7,13 +7,13 @@ import nl.uu.cs.iss.ga.sim2apl.core.agent.Trigger;
 
 public interface MessageInterface extends Trigger {
 	
-	public Collection<nl.uu.cs.iss.ga.sim2apl.core.agent.AgentID> getReceiver();
+	Collection<nl.uu.cs.iss.ga.sim2apl.core.agent.AgentID> getReceiver();
 
-	public AgentID getSender();
+	AgentID getSender();
 	
-	public void addUserDefinedParameter(String key, String value);
+	void addUserDefinedParameter(String key, String value);
 	
-	public String getUserDefinedParameter(String key);
+	String getUserDefinedParameter(String key);
 	
-	public String getContent();
+	String getContent();
 }

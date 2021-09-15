@@ -12,9 +12,9 @@ import nl.uu.cs.iss.ga.sim2apl.core.defaults.messenger.MessageReceiverNotFoundEx
  * @author Bas Testerink
  * @author Mohammad Shafahi
  */
-public interface Messenger<T extends MessageInterface> extends AgentDeathListener {
+public interface Messenger<T extends MessageInterface, X> extends AgentDeathListener {
 	/** Intended to make the messenger aware of the agents' existence. Registering is required for the agent to send and receive messages. */
-	public void register(final Agent agent);
+	public void register(final Agent<X> agent);
 	
 	/** Deregister to announce that this agent will no longer listen to messages that are received (will also disable the possiblity for sending messages). */
 	public void deregister(final nl.uu.cs.iss.ga.sim2apl.core.agent.AgentID agentID);

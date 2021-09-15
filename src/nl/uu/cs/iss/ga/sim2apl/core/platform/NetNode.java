@@ -24,19 +24,19 @@ import nl.uu.cs.iss.ga.sim2apl.core.logging.Loggable;
  * Prototype/Ad-Hoc/Hack solution for multiple platforms, in preparation for a
  * robust system.
  */
-public class NetNode<T extends MessageInterface> implements Messenger<T>, Runnable {
+public class NetNode<X, T extends MessageInterface> implements Messenger<T, X>, Runnable {
 
 	protected final Loggable logger = Platform.getLogger();
 	protected final static ExecutorService THREAD_SERVICE = Executors.newCachedThreadPool();
 
 	protected String host;
 	protected int port;
-	protected Messenger<T> innerMessenger;
+	protected Messenger<T, X> innerMessenger;
 	protected boolean listening = true;
 
 	protected nl.uu.cs.iss.ga.sim2apl.core.fipa.ams.DirectoryFacilitator yellowPages;
 	
-	public NetNode(Messenger<T> localMessenger, String host, int port) {
+	public NetNode(Messenger<T, X> localMessenger, String host, int port) {
 		this.host = host;
 		this.port = port;
 		this.innerMessenger = localMessenger;
@@ -146,7 +146,7 @@ public class NetNode<T extends MessageInterface> implements Messenger<T>, Runnab
 	}
 
 	@Override
-	public void register(Agent agent) {
+	public void register(Agent<X> agent) {
 		if (agent instanceof nl.uu.cs.iss.ga.sim2apl.core.fipa.ams.DirectoryFacilitator) {
 			yellowPages = (DirectoryFacilitator) agent;
 		}
