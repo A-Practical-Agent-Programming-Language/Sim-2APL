@@ -28,3 +28,6 @@ $ mvn install
 This adds Sim2APL to your local Maven repository. You can now include it as a dependency in your pom.xml, or include the generated Jar under `target` in the included sources of your IDE project.
 
 
+# License
+This library contains free software; The code can be freely used under the Mozilla Public License 2.0. See the license file for details.
+This code comes with ABSOLUTELY NO WARRANTY, to the extent permitted by applicable law.
