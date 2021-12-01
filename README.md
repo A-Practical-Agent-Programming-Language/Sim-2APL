@@ -20,7 +20,7 @@ This library can be used by other Java programs to program 2APL agents and execu
 To install, clone the project, and run Maven:
 
 ```bash
-$ git clone https://bitbucket.org/goldenagents/sim2apl.git
+$ git clone https://github.com/A-Practical-Agent-Programming-Language/Sim2APL.git
 $ cd sim2apl
 $ mvn install
 ```
