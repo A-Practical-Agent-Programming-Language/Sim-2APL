@@ -1,6 +1,11 @@
+[![DOI](https://zenodo.org/badge/433844300.svg)](https://zenodo.org/badge/latestdoi/433844300)
+![GitHub](https://img.shields.io/github/license/A-Practical-Agent-Programming-Language/Sim-2APL)
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/A-Practical-Agent-Programming-Language/Sim-2APL)
+
+
 A 2APL Java library for step-based simulations
 
-This library allows you to program cogntive / BDI agents to use in (social) simulation environments. With this version of 2APL, agents are synchronized through ticks, and perform one deliberation cycle (sense-reason-act) per tick. Where the default 2APL allows agents to perform actions in the environment directly, Sim2APl requires agents to produce action references. The actions should be effected in the environment after a tick has executed in a deterministic manner. All this together allows running reproducible, deterministic simulations using complex BDI agents.
+This library allows you to program cogntive / BDI agents to use in (social) simulation environments. With this version of 2APL, agents are synchronized through ticks, and perform one deliberation cycle (sense-reason-act) per tick. Where the default 2APL allows agents to perform actions in the environment directly, Sim-2APl requires agents to produce action references. The actions should be effected in the environment after a tick has executed in a deterministic manner. All this together allows running reproducible, deterministic simulations using complex BDI agents.
 
 ### Defaults
 By default, agents are initiated through a `Platform`. The platform is the central class through which agents can be instantiated, changed, or removed.
@@ -20,12 +25,12 @@ This library can be used by other Java programs to program 2APL agents and execu
 To install, clone the project, and run Maven:
 
 ```bash
-$ git clone https://github.com/A-Practical-Agent-Programming-Language/Sim2APL.git
-$ cd sim2apl
+$ git clone https://github.com/A-Practical-Agent-Programming-Language/Sim-2APL.git sim-2apl
+$ cd sim-2apl
 $ mvn install
 ```
 
-This adds Sim2APL to your local Maven repository. You can now include it as a dependency in your pom.xml, or include the generated Jar under `target` in the included sources of your IDE project.
+This adds Sim-2APL to your local Maven repository. You can now include it as a dependency in your pom.xml, or include the generated Jar under `target` in the included sources of your IDE project.
 
 
 # License
